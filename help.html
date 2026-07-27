@@ -89,11 +89,11 @@
         <div class="info-card">
             在開始遊戲前，您可以勾選要裝備的消耗性卡片 (每局消耗1張)：
             <ul>
-                <li><img src="c1.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>👼 天使卡：</strong>抵擋一次客人因耐心耗盡生氣而導致的扣款 ($30)。</div></li>
+                <li><img src="c1.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>👼 天使卡：</strong>抵擋一次客人因耐心耗盡生氣而導致的扣款 ($150)。</div></li>
                 <li><img src="c2.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>⏳ 產線秒數減2秒卡：</strong>大幅提升您的製餐速度！</div></li>
                 <li><img src="c3.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🤖 自動製餐卡：</strong>開局自動替您完美服務前2位客人，讓您輕鬆度過前期。</div></li>
                 <li><img src="c4.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🌪️ 自動攪拌卡：</strong>讓您免去手動攪拌的煩惱，自動進入攪拌狀態。</div></li>
-                <li><img src="c5.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🛑 電腦暫停卡：</strong>(僅限對戰模式) 讓所有電腦對手開局發呆 9 秒！</div></li>
+                <li><img src="c5.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🛑 電腦暫停卡：</strong>(僅限對戰模式) 讓敵方電腦對手開局發呆 6 秒！</div></li>
                 <li><img src="c6.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🃏 賭局模式作弊卡：</strong>(僅限賭局模式) 保障您押注的隊伍在結算時額外 +2 分！</div></li>
                 <li><img src="c7.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>⚡ 升級格數*1格卡：</strong>該局製餐產線上限 +1。</div></li>
                 <li><img src="c8.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🚀 升級格數*2格卡：</strong>該局製餐產線上限 +2。</div></li>
@@ -103,7 +103,37 @@
             </ul>
         </div>
 
-        <div class="section-title">⚔️ 電腦對戰模式</div>
+        <div class="section-title">🏅 排位賽模式</div>
+        <div class="info-card">
+            挑戰自我極限，與不同難度的 1 位專屬電腦進行 1v1 對戰！<br>
+            <strong>計分規則：</strong>獲勝 <strong>+1 分</strong>，落敗則 <strong>-1 分</strong> (⚠️ 遊戲途中點擊「重新開始」將直接判定為落敗並扣分)。<br>
+            
+            <div style="margin-top: 15px; padding: 10px; background: #fdf3e7; border-radius: 8px; border: 1px dashed #d9b382;">
+                <strong>階級晉升條件與對手強度：</strong>
+                <div style="margin-top: 10px;">
+                    <div style="margin-bottom: 8px;">🥉 <strong>青銅等級：</strong>初始階級，滿 <strong>5分</strong> 升級。<span style="color:#666; font-size:13px;">(對手：正常電腦)</span></div>
+                    <div style="margin-bottom: 8px;">🥇 <strong>黃金等級：</strong>滿 <strong>7分</strong> 升級。<span style="color:#666; font-size:13px;">(對手：套用攪拌減2秒效果)</span></div>
+                    <div style="margin-bottom: 8px;">💎 <strong>鑽石等級：</strong>滿 <strong>8分</strong> 升級。<span style="color:#666; font-size:13px;">(對手：套用升級格數*1格效果)</span></div>
+                    <div style="margin-bottom: 8px;">👑 <strong>大師等級：</strong>滿 <strong>9分</strong> 升級。<span style="color:#666; font-size:13px;">(對手：套用升級格數*2格效果)</span></div>
+                    <div style="margin-bottom: 8px;">🔥 <strong>不朽等級：</strong>最高榮耀！維持 <strong>20天</strong> 後將降回鑽石等級。<span style="color:#666; font-size:13px;">(對手：同大師等級)</span></div>
+                </div>
+            </div>
+            <div style="margin-top: 10px; font-size: 13px; color: #555;">
+                🛠️ <strong>開發者模式：</strong>開啟時，可點擊「牌位加分」按鈕直接強制獲得 1 分。
+            </div>
+        </div>
+
+        <div class="section-title">🤝 電腦組隊模式</div>
+        <div class="info-card">
+            玩家將與 1 位「電腦隊友」攜手合作，對抗由 2 位敵方電腦組成的敵方隊伍！<br>
+            雙方比拼服務的總顧客數，若 <strong>[玩家 + 電腦隊友]</strong> 總出餐數勝出，即可獲得勝利。<br>
+            <strong>🏆 勝利獎勵：</strong>隨機獲得商店內販售的任意卡片 1 張！<br>
+            <div style="margin-top: 8px; font-size: 13px; color: #555;">
+                ⚠️ <em>注意：在此模式中裝備【電腦暫停卡】，將只會對「敵方隊伍」生效，你的隊友不會被暫停。</em>
+            </div>
+        </div>
+
+        <div class="section-title">⚔️ 經典電腦對戰</div>
         <div class="info-card">
             與各路 AI 好手 (機器人、異星人、駭客等) 比拼接單手速！<br>
             限時內誰服務的顧客人數最多即為優勝。<br>
