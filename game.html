@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- APP 全螢幕與圖標設定支援 -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1f1815">
+    
+    <title>夢幻飲料店經營</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; user-select: none; }
+        body { background-color: #1f1815; color: #333; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; overflow-x: hidden; }
+
+        .header-container { width: 100%; max-width: 900px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-shrink: 0; }
+        .system-marquee { flex: 1; background: #1a1412; color: #fff; padding: 12px 0; font-size: 22px; font-weight: 900; border-radius: 12px; border: 3px solid #ff9800; box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2); overflow: hidden; white-space: nowrap; margin-bottom: 0; }
+        .system-marquee-content { display: inline-block; padding-left: 100%; animation: scrollMarquee 40s linear infinite; }
+        .system-marquee-content span { margin-right: 50px; color: #ffb74d; }
+        @keyframes scrollMarquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+        .bgm-btn { padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer; border: none; color: white; white-space: nowrap; flex-shrink: 0; transition: 0.1s; }
+        .bgm-btn:active { transform: translateY(4px); }
+        .bgm-btn.playing { background: #ff9800; box-shadow: 0 4px #d87d00; }
+        .bgm-btn.playing:active { box-shadow: 0 0px #d87d00; }
+        .bgm-btn.muted { background: #9e9e9e; box-shadow: 0 4px #616161; }
+        .bgm-btn.muted:active { box-shadow: 0 0px #616161; }
+
+        .view-container { width: 100%; max-width: 1000px; display: flex; justify-content: center; align-items: flex-start; flex: 1; }
+        
+        .panel { background: #fff8ee; border: 5px solid #8c6239; border-radius: 20px; padding: 30px; width: 100%; max-width: 750px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; }
+        .panel h1 { margin-top: 0; color: #5c3a21; font-size: 28px; margin-bottom: 10px;}
+        .panel h2 { color: #d32f2f; margin-bottom: 20px; }
+        
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; }
+        .overlay-box { background: #fff8ee; padding: 40px; border-radius: 20px; text-align: center; border: 5px solid #8c6239; width: 90%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .overlay-box h1 { margin-top: 0; color: #5c3a21; font-size: 26px; margin-bottom: 15px;}
+        .overlay-box p { font-size: 16px; color: #555; font-weight: bold; margin-bottom: 20px; }
+
+        /* 圖片預覽彈窗專用 */
+        #image-viewer-overlay { cursor: zoom-out; z-index: 3000; }
+        #enlarged-image { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 12px; border: 4px solid #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.9); cursor: zoom-out; }
+
+        .info-box { background: #fff; border: 2px solid #8c6239; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center; font-weight: bold; font-size: 18px; color: #5c3a21; position: relative; }
+        .equipment-section { background: #fdf3e7; border: 2px dashed #d9b382; border-radius: 12px; padding: 15px; text-align: left; margin-bottom: 20px; }
+        .equipment-title { font-size: 18px; font-weight: bold; color: #5c3a21; border-bottom: 1px solid #d9b382; padding-bottom: 8px; margin-bottom: 15px; }
+        .equip-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #fff; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2c097; cursor: pointer; }
+        .equip-item input { transform: scale(1.5); margin-right: 15px; cursor: pointer;}
+        .equip-icon { width: 64px; height: 64px; object-fit: contain; margin-right: 15px; flex-shrink: 0; border-radius: 6px; cursor: zoom-in; }
+        .equip-item label { flex: 1; cursor: pointer; font-size: 16px; font-weight: bold; color: #333; display: flex; align-items: center;}
+        .equip-item .stock { font-size: 14px; color: #fff; background: #8c6239; padding: 4px 10px; border-radius: 12px;}
+        .equip-item.disabled { opacity: 0.5; background: #eee; cursor: not-allowed; }
+        .equip-item.disabled label, .equip-item.disabled input { cursor: not-allowed; }
+
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .shop-item { display: flex; flex-direction: column; justify-content: space-between; background: #fff; padding: 15px; border-radius: 12px; border: 2px solid #8c6239; text-align: center; }
+        .card-icon { width: 80px; height: 80px; object-fit: contain; margin: 0 auto 10px; display: block; border-radius: 8px; cursor: zoom-in; }
+        .shop-info strong { display: block; font-size: 18px; color: #d32f2f; margin-bottom: 5px; }
+        .shop-info small { color: #666; font-size: 13px; display: block; margin-bottom: 15px; min-height: 20px; }
+        
+        .btn { background: #4caf50; color: white; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer; box-shadow: 0 4px #2e7d32; transition: 0.1s; margin: 5px; }
+        .btn:active { transform: translateY(4px); box-shadow: 0 0px #2e7d32; }
+        .btn:disabled { background: #9e9e9e; box-shadow: 0 4px #616161; cursor: not-allowed; }
+        .btn.primary { background: #ff9800; box-shadow: 0 4px #f57c00; }
+        .btn.primary:active { box-shadow: 0 0px #f57c00; }
+        .btn.danger { background: #f44336; box-shadow: 0 4px #d32f2f; }
+        .btn.blue { background: #2196f3; box-shadow: 0 4px #1976d2; }
+        .btn.blue:active { box-shadow: 0 0px #1976d2; }
+        .btn.dev { background: #9c27b0; box-shadow: 0 4px #7b1fa2; }
+        .btn.dev:active { box-shadow: 0 0px #7b1fa2; }
+        .btn.small { padding: 6px 12px; font-size: 12px; margin: 0; box-shadow: 0 3px #1976d2;}
+        .btn.small:active { box-shadow: 0 0px #1976d2; transform: translateY(3px); }
+
+        .game-wrapper { width: 100%; display: none; flex-direction: column; gap: 15px; }
+        .game-boards { display: flex; gap: 20px; width: 100%; flex-wrap: wrap; justify-content: center;}
+        .game-board { background: #fff8ee; padding: 15px; border-radius: 20px; border: 4px solid #8c6239; flex: 1; min-width: 320px; max-width: 450px; display: flex; flex-direction: column; }
+        .board-title { text-align: center; font-size: 20px; font-weight: bold; color: #fff; background: #5c3a21; padding: 8px; border-radius: 10px; margin-bottom: 10px; }
+        .board-title.ai { background: #1976d2; }
+
+        .event-marquee { background: #ffeb3b; color: #d32f2f; font-weight: bold; font-size: 15px; padding: 6px; overflow: hidden; white-space: nowrap; border-radius: 8px; margin-bottom: 10px; border: 1px solid #fbc02d; display: none; width: 100%; }
+        .event-marquee-content { display: inline-block; animation: eventMarquee 5s linear infinite; }
+        @keyframes eventMarquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; background-color: #e2c097; padding: 10px 15px; border-radius: 12px; font-weight: bold; color: #3d2314; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; width: 100%; max-width: 1000px; }
+        .stats-bar-controls { display: flex; gap: 8px; }
+        .control-btn { background: #607d8b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;}
+        .control-btn.pause { background: #ffb300; color: #333; }
+        .control-btn.restart { background: #f44336; }
+
+        .customers-wrapper { display: flex; gap: 10px; margin-bottom: 10px; }
+        .customer-card { border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .customer-card.active { flex: 2; background: #ffffff; border: 3px solid #ff9800; }
+        .customer-card.waiting { flex: 1; background: #f5f5f5; border: 2px dashed #999; opacity: 0.9; align-items: center; justify-content: center;}
+        
+        .customer-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #ccc; padding-bottom: 5px; font-weight: bold; font-size: 14px;}
+        .patience-bar-container { width: 100%; height: 10px; background: #eee; border-radius: 5px; overflow: hidden; border: 1px solid #ccc; }
+        .patience-fill { height: 100%; background: #4caf50; width: 100%; transition: background 0.3s; }
+
+        .order-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start;}
+        .order-item { background: #fdf3e7; border: 1px solid #e2c097; padding: 6px; border-radius: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 100px;}
+        .order-item-top { display: flex; align-items: center; gap: 6px; }
+        .order-item img { width: 25px; height: 25px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
+        .order-item.done { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .order-item.done img { opacity: 0.6; }
+
+        .actions-row { display: flex; gap: 8px; margin-top: auto; }
+        .serve-btn, .snack-btn { border: none; padding: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 15px;}
+        .serve-btn { flex: 1; background: #4caf50; color: white; box-shadow: 0 4px #2e7d32; }
+        .snack-btn { background: #03a9f4; color: white; box-shadow: 0 4px #0288d1;}
+        .snack-btn:disabled { background: #b0bec5; box-shadow: 0 4px #90a4ae; cursor: not-allowed; }
+
+        .stir-btn { background: #ff9800; color: #fff; border: none; border-radius: 8px; font-size: 16px; padding: 12px; font-weight: bold; cursor: pointer; text-align: center; width: 100%; box-shadow: 0 4px #d87d00; transition: 0.1s;}
+        .stir-btn.stirring { background: #9e9e9e; cursor: not-allowed; box-shadow: 0 4px #616161;}
+        .stir-btn.stir-done { background: #4caf50; cursor: default; box-shadow: 0 4px #2e7d32;}
+
+        .stir-progress-bg { width: 100%; height: 8px; background: #eee; border-radius: 4px; margin-top: 6px; overflow: hidden; border: 1px solid #ccc; }
+        .stir-progress-fill { height: 100%; background: #4caf50; width: 0%; transition: width 0.1s linear;}
+
+        .queue-section { background: #f4e3cf; padding: 8px; border-radius: 12px; margin-bottom: 10px; }
+        .queue-title { font-weight: bold; color: #5c3a21; font-size: 13px; }
+        .queue-slots { display: flex; gap: 8px; min-height: 45px; overflow-x: auto; margin-top: 6px;}
+        .queue-slot { background: #fff; border: 2px dashed #b58d63; border-radius: 8px; padding: 6px; min-width: 90px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; }
+        .progress-bar { width: 100%; height: 5px; background: #eee; border-radius: 3px; margin-top: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #4caf50; width: 0%; }
+
+        .ready-section { background: #e8f5e9; border: 2px solid #81c784; padding: 8px; border-radius: 12px; margin-bottom: 10px; }
+        .inventory-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+        .inventory-badge { background: #ffffff; border: 1px solid #81c784; border-radius: 20px; padding: 3px 8px; font-size: 11px; font-weight: bold; color: #2e7d32; }
+
+        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: auto; }
+        .menu-card { background: white; border: 1px solid #d9b382; border-radius: 8px; padding: 6px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: 0.1s; }
+        .menu-card:hover { border-color: #8c6239; transform: scale(1.02); }
+        .menu-img { width: 45px; height: 45px; object-fit: cover; border-radius: 8px; margin-bottom: 3px; }
+        .menu-name { font-size: 11px; font-weight: bold; color: #333; height: 30px; display: flex; align-items: center; justify-content: center; }
+        .menu-info { font-size: 10px; color: #666; }
+
+        .log-box { background: #fff; border: 1px solid #d9b382; height: 50px; border-radius: 8px; padding: 5px; overflow-y: auto; font-size: 11px; color: #666; margin-top: 10px; }
+
+        .edit-money-btn { background: none; border: none; cursor: pointer; font-size: 18px; margin-left: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+<audio id="bgm" src="cm.mp3" loop preload="auto"></audio>
+
+<div class="header-container">
+    <div class="system-marquee">
+        <div class="system-marquee-content">
+            <span>📢 歡迎遊玩刺激的咖啡廳經營小遊戲，體驗與客人接單刺激的送餐快感吧。</span>
+            <span>👼 天使卡可以保護玩家免受到顧客的攻擊一次，歡迎多多妥善使用。</span>
+            <span>⚡ 提升製餐效率，可以透過擴充方式增加製餐格數。</span>
+            <span>📢 累積遊玩局數到達5局被扣費?趕緊前往商店購買保險卡。</span>
+            <span>📢 想要在起跑點不被輾壓，前往商城購買【自動製餐卡】，可以幫你服務前兩位顧客。</span>
+            <span>📢 攪拌耽誤備餐手速?趕緊前往商店購買【自動攪拌卡】吧。</span>
+            <span>📢 電腦玩家速度超乎你的想像?【電腦暫停卡】幫你解決前期煩惱，現正推出。</span>
+        </div>
+    </div>
+    <button id="bgm-toggle-btn" class="bgm-btn playing" onclick="toggleBgm()">🔊 音樂靜音</button>
+</div>
+
+<div class="view-container">
+    
+    <!-- 首頁 -->
+    <div id="start-panel" class="panel" style="display: block;">
+        <h1>☕ 夢幻飲料店</h1>
+        <div class="info-box">
+            💰 擁有金額: $<span id="menu-money-display">0</span><button class="edit-money-btn" id="edit-money-btn" onclick="editMoney()">✏️</button><br>
+            <span style="font-size: 14px; color: #d32f2f;">🗓️ 已累積遊玩局數: <span id="games-played-display">0</span> / 5 (滿5局將扣除電費與稅金共$1000)</span>
+            <div style="margin-top: 5px;">
+                <button class="btn blue small" id="dev-max-games-btn" style="display:none;" onclick="triggerMaxGames()">局數擴充滿 (開發者測試)</button>
+            </div>
+        </div>
+        
+        <div class="equipment-section">
+            <div class="equipment-title">🎒 戰前裝備 (單局消耗品)</div>
+            <div class="equip-item" id="wrap-angel">
+                <input type="checkbox" id="equip-angel">
+                <label for="equip-angel"><img src="c1.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 啟用【天使卡】(抵擋一次顧客生氣)</label>
+                <span class="stock">庫存: <span id="stock-angel">0</span></span>
+            </div>
+            
+            <div class="equip-item" id="wrap-timecard">
+                <input type="checkbox" id="equip-timecard">
+                <label for="equip-timecard"><img src="c2.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 啟用【產線秒數減2秒卡】(所有餐點耗時-2s)</label>
+                <span class="stock">庫存: <span id="stock-timecard">0</span></span>
+            </div>
+            
+            <div class="equip-item" id="wrap-autocraft">
+                <input type="checkbox" id="equip-autocraft">
+                <label for="equip-autocraft"><img src="c3.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 啟用【自動製餐卡】(開局自動服侍前2位客人)</label>
+                <span class="stock">庫存: <span id="stock-autocraft">0</span></span>
+            </div>
+            
+            <div class="equip-item" id="wrap-autostir">
+                <input type="checkbox" id="equip-autostir">
+                <label for="equip-autostir"><img src="c4.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 啟用【自動攪拌卡】(自動攪拌動作)</label>
+                <span class="stock">庫存: <span id="stock-autostir">0</span></span>
+            </div>
+
+            <div class="equip-item" id="wrap-aipause">
+                <input type="checkbox" id="equip-aipause">
+                <label for="equip-aipause"><img src="c5.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 啟用【電腦暫停卡】(僅對戰，電腦晚6秒)</label>
+                <span class="stock">庫存: <span id="stock-aipause">0</span></span>
+            </div>
+
+            <div class="equipment-title" style="margin-top:20px;">⚡ 擴充製餐格數 (僅能擇一)</div>
+            <div class="equip-item">
+                <input type="radio" name="equip-slot" id="equip-slot0" value="0" checked>
+                <label for="equip-slot0">無擴充 (預設 2 格)</label>
+            </div>
+            <div class="equip-item" id="wrap-slot1">
+                <input type="radio" name="equip-slot" id="equip-slot1" value="1">
+                <label for="equip-slot1"><img src="c7.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 使用【升級格數*1格】卡</label>
+                <span class="stock">庫存: <span id="stock-slot1">0</span></span>
+            </div>
+            <div class="equip-item" id="wrap-slot2">
+                <input type="radio" name="equip-slot" id="equip-slot2" value="2">
+                <label for="equip-slot2"><img src="c8.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 使用【升級格數*2格】卡</label>
+                <span class="stock">庫存: <span id="stock-slot2">0</span></span>
+            </div>
+
+            <div class="equipment-title" style="margin-top:20px;">🛡️ 保險卡狀態 (滿5局自動使用)</div>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div class="equip-item" style="flex: 1; cursor: default; margin-bottom: 0; flex-direction: column; align-items: center; gap: 8px;">
+                    <img src="c9.png" class="card-icon" onerror="this.style.display='none'" style="margin-bottom:0; width:64px; height:64px;" onclick="openImageViewer(event, this.src)">
+                    <span style="font-size:15px; font-weight:bold; color:#1976d2;">免扣電費卡</span>
+                    <span class="stock">庫存: <span id="menu-stock-noelec">0</span></span>
+                </div>
+                <div class="equip-item" style="flex: 1; cursor: default; margin-bottom: 0; flex-direction: column; align-items: center; gap: 8px;">
+                    <img src="c10.png" class="card-icon" onerror="this.style.display='none'" style="margin-bottom:0; width:64px; height:64px;" onclick="openImageViewer(event, this.src)">
+                    <span style="font-size:15px; font-weight:bold; color:#1976d2;">免扣營業稅</span>
+                    <span class="stock">庫存: <span id="menu-stock-notax">0</span></span>
+                </div>
+                <div class="equip-item" style="flex: 1; cursor: default; margin-bottom: 0; flex-direction: column; align-items: center; gap: 8px;">
+                    <img src="c11.png" class="card-icon" onerror="this.style.display='none'" style="margin-bottom:0; width:64px; height:64px;" onclick="openImageViewer(event, this.src)">
+                    <span style="font-size:15px; font-weight:bold; color:#1976d2;">免扣所有費</span>
+                    <span class="stock">庫存: <span id="menu-stock-noall">0</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn" onclick="startGame(false)" style="margin:0;">▶ 開始營業 (單人)</button>
+            <div style="display: flex; gap: 5px; align-items: stretch; margin:0;">
+                <button class="btn blue" onclick="startGame(true)" style="flex: 1; margin:0;">⚔️ 與電腦對戰</button>
+                <select id="ai-count-select" style="padding: 10px; border-radius: 12px; border: 2px solid #2196f3; font-weight: bold; background: #fff; cursor:pointer;">
+                    <option value="1">1位電腦</option>
+                    <option value="2">2位電腦</option>
+                    <option value="3">3位電腦</option>
+                </select>
+            </div>
+            
+            <button class="btn dev" onclick="openGambleModal()" style="margin:0; background:#673ab7; box-shadow:0 4px #512da8;">🎲 賭局模式 ($1200)</button>
+            
+            <button class="btn blue" onclick="window.location.href='help.html'" style="margin:0;">📖 遊戲說明</button>
+            <button class="btn primary" onclick="openShop()" style="margin:0;">🛒 前往商店</button>
+            <button class="btn dev" id="btn-dev-mode" onclick="toggleDevMode()" style="margin:0;">🛠️ 開發者模式</button>
+        </div>
+    </div>
+
+    <!-- 商店 -->
+    <div id="shop-panel" class="panel">
+        <h1>🛒 補給商店</h1>
+        <h2>💰 擁有金額: $<span id="shop-money-display">0</span></h2>
+        
+        <div class="shop-grid">
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c1.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>👼 天使卡</strong><small>保護免受顧客生氣扣款一次</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-angel">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-angel" onclick="buyItem('angel', 250)">$250 購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c2.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>⏳ 產線減2秒卡</strong><small>所有餐點製作耗時減 2 秒</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-timecard">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-timecard" onclick="buyItem('timecard', 250)">$250 購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c3.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>🤖 自動製餐卡</strong><small>開局自動為前2位客人製餐與出餐</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-autocraft">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-autocraft" onclick="buyItem('autocraft', 500)">$500 購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c4.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>🌪️ 自動攪拌卡</strong><small>免去手動點擊，自動完成攪拌</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-autostir">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-autostir" onclick="buyItem('autostir', 2500)">$2500 購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c5.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>🛑 電腦暫停卡</strong><small>對戰時電腦開局暫停 6 秒</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-aipause">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-aipause" onclick="buyItem('aipause', 300)">$300 購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c6.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>🃏 賭局模式作弊卡</strong><small>結算時所選隊伍分數+2 (限賭局)</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-gamblecheat">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-gamblecheat" onclick="buyItem('gambleCheat', 900)">$900 購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c7.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>⚡ 升級格數*1格卡</strong><small>該局製餐產線上限 +1</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-slot1">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-slot1" onclick="buyItem('slot1', 2000)">$2000 購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c8.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>🚀 升級格數*2格卡</strong><small>該局製餐產線上限 +2</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-slot2">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-slot2" onclick="buyItem('slot2', 3000)">$3000 購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c9.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>🛡️ 免扣電費卡</strong><small>滿5局時免扣電費 $400</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-noelec">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-noelec" onclick="buyItem('noElec', 300)">$300 購買</button>
+            </div>
+            <div class="shop-item">
+                <div class="shop-info">
+                    <img src="c10.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>🛡️ 免扣營業稅卡</strong><small>滿5局時免扣稅金 $600</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-notax">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-notax" onclick="buyItem('noTax', 400)">$400 購買</button>
+            </div>
+            <div class="shop-item" style="grid-column: span 2;">
+                <div class="shop-info">
+                    <img src="c11.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+                    <strong>🌟 免扣所有費卡</strong><small>滿5局時免扣所有費 $1000</small>
+                    <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-noall">0</span></span>
+                </div>
+                <button class="btn primary" id="btn-buy-noall" onclick="buyItem('noAll', 800)">$800 購買</button>
+            </div>
+        </div>
+        <button class="btn" onclick="closeShop()" style="width: 100%; margin:0; padding:15px; font-size:18px;">🔙 返回首頁</button>
+    </div>
+
+    <!-- 遊戲進行中介面 -->
+    <div id="game-wrapper" class="game-wrapper">
+        <div class="event-marquee" id="event-marquee">
+            <div class="event-marquee-content">已觸發天使卡的使用！抵擋了一次顧客怒氣！</div>
+        </div>
+
+        <div class="stats-bar">
+            <div style="display: flex; gap: 15px; font-size: 16px;">
+                <div id="money-display-container">💰 本局營收: $<span id="money">0</span></div>
+                <div>⏱️ 剩餘: <span id="game-timer">00:00</span></div>
+                <div id="vs-score-display" style="display:none; color: #d32f2f; flex-wrap: wrap;"></div>
+            </div>
+            <div class="stats-bar-controls">
+                <button class="control-btn" id="btn-instant-win" onclick="instantWin()" style="display:none; background:#9c27b0;">🏆 直接勝利</button>
+                <button class="control-btn pause" onclick="pauseGame()">⏸️ 暫停</button>
+                <button class="control-btn restart" onclick="resetToHome()">🔄 重新開始</button>
+            </div>
+        </div>
+
+        <div class="game-boards" id="main-game-boards">
+            <!-- 玩家面板 -->
+            <div class="game-board" id="player-board">
+                <div class="board-title">🧑‍🍳 玩家營業區</div>
+                <div class="customers-wrapper">
+                    <div class="customer-card active">
+                        <div class="customer-header"><span id="p-c1-name">👤 載入中...</span><span style="font-size:11px;">耐心 <span id="p-c1-time">0</span>s</span></div>
+                        <div class="patience-bar-container"><div class="patience-fill" id="p-c1-patience-bar"></div></div>
+                        <div class="order-list" id="p-c1-orders"></div>
+                        
+                        <div class="actions-row">
+                            <button class="serve-btn" onclick="handleServeClick()">🚚 出餐</button>
+                            <button class="snack-btn" id="p-snack-btn" onclick="handleSnackClick()">🍪 安撫</button>
+                        </div>
+                        <!-- 攪拌按鈕獨立區域 -->
+                        <div id="p-stir-container" style="display: none; width: 100%;"></div>
+                    </div>
+                    <div class="customer-card waiting">
+                        <div class="customer-header"><span id="p-c2-name">👤 等待中</span></div>
+                        <div class="order-list" id="p-c2-orders" style="justify-content: center;"></div>
+                    </div>
+                </div>
+                <div class="queue-section">
+                    <div class="queue-title">🔥 產線 (<span id="p-queue-count">0</span>/<span id="p-max-queue">2</span>)</div>
+                    <div class="queue-slots" id="p-queue-slots"></div>
+                </div>
+                <div class="ready-section">
+                    <div style="font-weight: bold; color: #2e7d32; margin-bottom: 5px; font-size:12px;">🍱 庫存</div>
+                    <div class="inventory-list" id="p-inventory-list"></div>
+                </div>
+                <div class="menu-grid" id="menu-grid"></div>
+                <div class="log-box" id="p-log-box"></div>
+            </div>
+            
+            <!-- 電腦面板容器，於遊戲開始時動態填入 -->
+            <div id="ai-boards-container" style="display: contents;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 圖片預覽放大彈窗 -->
+<div id="image-viewer-overlay" class="overlay" onclick="closeImageViewer()">
+    <img id="enlarged-image" src="">
+</div>
+
+<!-- 暫停覆蓋層 -->
+<div id="pause-overlay" class="overlay">
+    <div class="overlay-box">
+        <h1>⏸️ 遊戲暫停狀態</h1>
+        <p>喝口茶休息一下，準備好再繼續挑戰！</p>
+        <button class="btn primary" onclick="resumeGame()" style="width: 100%;">▶ 繼續開始</button>
+    </div>
+</div>
+
+<!-- 賭局模式覆蓋層 -->
+<div id="gamble-overlay" class="overlay">
+    <div class="overlay-box">
+        <h1>🎲 賭局模式</h1>
+        <p>花費 $1200 觀戰，選擇你認為會獲勝的隊伍！</p>
+        <select id="gamble-mode-select" onchange="updateGambleTeams()" style="padding: 12px; width: 100%; margin-bottom: 12px; font-weight:bold; border-radius: 8px; border: 2px solid #673ab7; font-size:16px;">
+            <option value="2">2位電腦對戰 (一般獎勵)</option>
+            <option value="4">4位電腦對戰 (雙倍獎勵)</option>
+        </select>
+        <select id="gamble-team-select" style="padding: 12px; width: 100%; margin-bottom: 20px; font-weight:bold; border-radius: 8px; border: 2px solid #673ab7; font-size:16px;">
+            <!-- 選項由 JS 產生 -->
+        </select>
+        <div class="equip-item" id="wrap-gamblecheat" style="margin-bottom:20px; text-align:left; display: flex; align-items: center; padding:15px;">
+            <input type="checkbox" id="equip-gamblecheat">
+            <img src="c6.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
+            <label for="equip-gamblecheat" style="font-size:15px; flex: 1;">使用【作弊卡】(分數+2)</label>
+            <span class="stock">庫存: <span id="stock-gamblecheat">0</span></span>
+        </div>
+        <button class="btn" style="background:#673ab7; width: 100%; margin:0 0 10px 0; box-shadow:0 4px #512da8; padding:15px; font-size:18px;" onclick="startGambleGame()">▶ 確認花費 $1200 開始</button>
+        <button class="btn danger" onclick="closeGambleModal()" style="width: 100%; margin:0; padding:15px; font-size:18px;">❌ 取消</button>
+    </div>
+</div>
+
+<!-- 結算畫面覆蓋層 -->
+<div id="gameover-overlay" class="overlay">
+    <div class="overlay-box">
+        <h1>⏳ 營業結束</h1>
+        <div id="vs-result-msg" style="font-size: 16px; font-weight: bold; margin-bottom: 15px; line-height: 1.5;"></div>
+        <h2 style="color:#d32f2f;" id="score-text-wrapper">本局營業額: +$<span id="final-score">0</span></h2>
+        <button class="btn primary" onclick="collectAndReturnHome()" style="width: 100%; padding: 15px; font-size: 18px;">💰 領取並回首頁</button>
+    </div>
+</div>
+
+<script>
+    const ITEMS = [
+        { id: 1, name: "(1) 手沖美式", time: 5, price: 100, img: "1.webp" },
+        { id: 2, name: "(2) 牛奶拿鐵", time: 6, price: 130, img: "2.avif" },
+        { id: 3, name: "(3) 卡布奇諾", time: 7, price: 140, img: "3.jpg" },
+        { id: 4, name: "(4) 抹茶拿鐵", time: 10, price: 160, img: "4.webp" },
+        { id: 5, name: "(5) 原味奶茶", time: 7, price: 95, img: "5.png" },
+        { id: 6, name: "(6) 草莓優格", time: 13, price: 125, img: "6.avif" }
+    ];
+
+    let playerTotalMoney = 1500; 
+    let gamesPlayed = 0; 
+    let inventory = { angel: 0, timecard: 0, slot1: 0, slot2: 0, noElec: 0, noTax: 0, noAll: 0, autocraft: 0, autostir: 0, aipause: 0, gambleCheat: 0 };
+    let isDevMode = false;
+
+    let gameState = 'menu'; 
+    let gameTimeLeft = 0;
+    let lastTime = 0;
+    let isVsMode = false;
+    let mainLoopId;
+    
+    // Gamble Mode variables
+    let isGambleMode = false;
+    let gambleChosenAiId = null;
+    let usedGambleCheat = false;
+    let gambleAiCount = 2;
+    const gambleAiNames = ["🤖 電腦玩家", "👽 異星玩家", "👾 駭客玩家", "👻 幽靈玩家"];
+    const gambleAiColors = ["#1976d2", "#9c27b0", "#e91e63", "#ff5722"];
+
+    let sessionMoney = 0, pMaxQueue = 2, pActiveQueue = [], pInventory = {}, pCustomers = [], pCustomerIndex = 65, pSnacks = 2, hasAngelCard = false, angelTriggered = false, pServedCount = 0;
+    let aiPlayers = [];
+    
+    let usedSlotCard = 0; 
+    let usedTimeCard = false; 
+    let timeReduction = 0; 
+
+    let usedAutoCraft = false;
+    let autoCraftProcessed = 0;
+    let usedAutoStir = false;
+    let usedAiPause = false;
+    let aiPauseTimer = 0;
+
+    // 開啟圖片預覽
+    function openImageViewer(event, src) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        document.getElementById('enlarged-image').src = src;
+        document.getElementById('image-viewer-overlay').style.display = 'flex';
+    }
+
+    // 關閉圖片預覽
+    function closeImageViewer() {
+        document.getElementById('image-viewer-overlay').style.display = 'none';
+        document.getElementById('enlarged-image').src = '';
+    }
+
+    // 音樂控制
+    const bgm = document.getElementById('bgm');
+    const bgmBtn = document.getElementById('bgm-toggle-btn');
+    let isMuted = localStorage.getItem('dreamCafeBgm') === 'muted';
+
+    function applyBgmState() {
+        if (isMuted) {
+            bgm.pause();
+            bgmBtn.textContent = '🔇 音樂開始';
+            bgmBtn.className = 'bgm-btn muted';
+        } else {
+            bgm.play().catch(e => console.log("Autoplay blocked:", e));
+            bgmBtn.textContent = '🔊 音樂靜音';
+            bgmBtn.className = 'bgm-btn playing';
+        }
+    }
+
+    function toggleBgm() {
+        isMuted = !isMuted;
+        localStorage.setItem('dreamCafeBgm', isMuted ? 'muted' : 'playing');
+        applyBgmState();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // 因應瀏覽器政策，若未靜音，在玩家首次點擊畫面時才真正播放
+        document.body.addEventListener('click', () => {
+            if (!isMuted && bgm.paused) {
+                bgm.play().catch(e => console.log(e));
+            }
+        }, { once: true });
+        applyBgmState();
+    });
+
+    function loadGameData() {
+        try {
+            const data = localStorage.getItem('dreamCafeData');
+            if (data) {
+                const parsed = JSON.parse(data);
+                playerTotalMoney = parsed.money !== undefined ? parsed.money : 1500;
+                gamesPlayed = parsed.gamesPlayed || 0;
+                if (parsed.inventory) {
+                    inventory = Object.assign(inventory, parsed.inventory);
+                }
+            }
+        } catch(e) { console.error("Error loading data", e); }
+    }
+
+    function saveGameData() {
+        try {
+            localStorage.setItem('dreamCafeData', JSON.stringify({
+                money: playerTotalMoney,
+                gamesPlayed: gamesPlayed,
+                inventory: inventory
+            }));
+        } catch(e) { console.error("Error saving data", e); }
+    }
+
+    function toggleDevMode() {
+        if (!isDevMode) {
+            let pwd = prompt("請輸入開發者密碼：");
+            if (pwd === "8888") {
+                isDevMode = true;
+                alert("🔓 開發者模式已解鎖！\n(金額可修改、商店免費、玩家產線1秒、滿局測試啟用、顧客不掉耐心、開放直接勝利)");
+                const btn = document.getElementById('btn-dev-mode');
+                btn.textContent = '🔒 結束開發者';
+                btn.classList.replace('dev', 'danger');
+                document.getElementById('dev-max-games-btn').style.display = 'inline-block';
+                document.getElementById('edit-money-btn').style.display = 'inline-block';
+                document.getElementById('btn-instant-win').style.display = 'inline-block';
+                updateMenuUI();
+                if(document.getElementById('shop-panel').style.display === 'block') updateShopUI();
+            } else if (pwd !== null) {
+                alert("❌ 密碼錯誤！");
+            }
+        } else {
+            isDevMode = false;
+            alert("🔒 已結束開發者模式，恢復正常遊戲規則。");
+            const btn = document.getElementById('btn-dev-mode');
+            btn.textContent = '🛠️ 開發者模式';
+            btn.classList.replace('danger', 'dev');
+            document.getElementById('dev-max-games-btn').style.display = 'none';
+            document.getElementById('edit-money-btn').style.display = 'none';
+            document.getElementById('btn-instant-win').style.display = 'none';
+            updateMenuUI();
+            if(document.getElementById('shop-panel').style.display === 'block') updateShopUI();
+        }
+    }
+
+    function editMoney() {
+        if(!isDevMode) return;
+        let val = prompt("請輸入欲修改的金額:", playerTotalMoney);
+        if(val !== null && !isNaN(val)) {
+            playerTotalMoney = parseInt(val);
+            saveGameData();
+            updateMenuUI();
+            if(document.getElementById('shop-panel').style.display === 'block') updateShopUI();
+        }
+    }
+
+    function triggerMaxGames() {
+        if(!isDevMode) return;
+        gamesPlayed = 5;
+        settleGamesPlayed();
+    }
+
+    function settleGamesPlayed() {
+        if (gamesPlayed >= 5) {
+            let msg = "📢 【5局營業結算】\n\n";
+            let elec = 400, tax = 600;
+            
+            if (inventory.noAll > 0) {
+                inventory.noAll--; elec = 0; tax = 0;
+                msg += "🌟 使用了【免扣所有費保險卡】，免除電費與稅金共 $1000！\n";
+            } else {
+                if (inventory.noElec > 0) { inventory.noElec--; elec = 0; msg += "🛡️ 使用了【免扣電費保險卡】，免除電費 $400！\n"; }
+                if (inventory.noTax > 0) { inventory.noTax--; tax = 0; msg += "🛡️ 使用了【免扣營業稅保險卡】，免除稅金 $600！\n"; }
+            }
+            
+            let totalDeduct = elec + tax;
+            if (totalDeduct > 0) {
+                msg += `💸 需繳納電費 $${elec} 與營業稅 $${tax}，共扣除 $${totalDeduct}。`;
+                playerTotalMoney -= totalDeduct;
+                if (playerTotalMoney < 0) playerTotalMoney = 0; 
+            } else {
+                msg += "🎉 本次結算無需繳納任何費用！";
+            }
+            alert(msg);
+            gamesPlayed = 0;
+            saveGameData();
+            updateMenuUI();
+        }
+    }
+
+    function showMainPanel(panelId) {
+        ['start-panel', 'shop-panel', 'game-wrapper'].forEach(id => document.getElementById(id).style.display = 'none');
+        document.getElementById('pause-overlay').style.display = 'none';
+        document.getElementById('gameover-overlay').style.display = 'none';
+        document.getElementById('gamble-overlay').style.display = 'none';
+        if (panelId) document.getElementById(panelId).style.display = (panelId === 'game-wrapper') ? 'flex' : 'block';
+    }
+
+    function showOverlay(overlayId) {
+        document.getElementById('pause-overlay').style.display = 'none';
+        document.getElementById('gameover-overlay').style.display = 'none';
+        document.getElementById('gamble-overlay').style.display = 'none';
+        if (overlayId !== 'none') document.getElementById(overlayId).style.display = 'flex';
+    }
+
+    function updateMenuUI() {
+        document.getElementById('menu-money-display').textContent = playerTotalMoney.toLocaleString();
+        document.getElementById('games-played-display').textContent = gamesPlayed;
+        
+        document.getElementById('stock-angel').textContent = inventory.angel;
+        document.getElementById('stock-timecard').textContent = inventory.timecard;
+        document.getElementById('stock-autocraft').textContent = inventory.autocraft;
+        document.getElementById('stock-autostir').textContent = inventory.autostir;
+        document.getElementById('stock-aipause').textContent = inventory.aipause;
+        document.getElementById('stock-slot1').textContent = inventory.slot1;
+        document.getElementById('stock-slot2').textContent = inventory.slot2;
+        
+        document.getElementById('menu-stock-noelec').textContent = inventory.noElec;
+        document.getElementById('menu-stock-notax').textContent = inventory.noTax;
+        document.getElementById('menu-stock-noall').textContent = inventory.noAll;
+
+        ['angel', 'timecard', 'slot1', 'slot2', 'autocraft', 'autostir', 'aipause'].forEach(key => {
+            const wrap = document.getElementById(`wrap-${key}`);
+            const input = document.getElementById(`equip-${key}`);
+            if(inventory[key] <= 0) {
+                wrap.classList.add('disabled');
+                if(input.type === 'checkbox') input.checked = false;
+                else if(input.checked) document.getElementById('equip-slot0').checked = true;
+                input.disabled = true;
+            } else {
+                wrap.classList.remove('disabled');
+                input.disabled = false;
+            }
+        });
+    }
+
+    function openShop() { updateShopUI(); showMainPanel('shop-panel'); }
+    function closeShop() { updateMenuUI(); showMainPanel('start-panel'); }
+    
+    function updateShopUI() {
+        document.getElementById('shop-money-display').textContent = playerTotalMoney.toLocaleString();
+        
+        const items = [
+            { id: 'angel', cost: 250 }, { id: 'timecard', cost: 250 },
+            { id: 'slot1', cost: 2000 }, { id: 'slot2', cost: 3000 },
+            { id: 'noelec', cost: 300 }, { id: 'notax', cost: 400 }, { id: 'noall', cost: 800 },
+            { id: 'autocraft', cost: 500 }, { id: 'autostir', cost: 2500 }, { id: 'aipause', cost: 300 },
+            { id: 'gamblecheat', cost: 900 }
+        ];
+
+        items.forEach(item => {
+            const finalCost = isDevMode ? 0 : item.cost;
+            const btn = document.getElementById(`btn-buy-${item.id}`);
+            if(btn) {
+                btn.textContent = `$${finalCost} 購買`;
+                btn.disabled = playerTotalMoney < finalCost;
+            }
+        });
+        
+        document.getElementById('stock-shop-angel').textContent = inventory.angel;
+        document.getElementById('stock-shop-timecard').textContent = inventory.timecard;
+        document.getElementById('stock-shop-autocraft').textContent = inventory.autocraft;
+        document.getElementById('stock-shop-autostir').textContent = inventory.autostir;
+        document.getElementById('stock-shop-aipause').textContent = inventory.aipause;
+        document.getElementById('stock-shop-slot1').textContent = inventory.slot1;
+        document.getElementById('stock-shop-slot2').textContent = inventory.slot2;
+        document.getElementById('stock-shop-noelec').textContent = inventory.noElec;
+        document.getElementById('stock-shop-notax').textContent = inventory.noTax;
+        document.getElementById('stock-shop-noall').textContent = inventory.noAll;
+        document.getElementById('stock-shop-gamblecheat').textContent = inventory.gambleCheat;
+    }
+
+    function buyItem(itemKey, baseCost) {
+        const finalCost = isDevMode ? 0 : baseCost;
+        if (playerTotalMoney >= finalCost) {
+            playerTotalMoney -= finalCost;
+            inventory[itemKey]++;
+            saveGameData();
+            updateShopUI();
+            alert(`✅ 購買成功！`);
+        } else {
+            alert(`❌ 金額不足！`);
+        }
+    }
+
+    function updateGambleTeams() {
+        const count = parseInt(document.getElementById('gamble-mode-select').value);
+        const select = document.getElementById('gamble-team-select');
+        select.innerHTML = '';
+        for(let i=0; i<count; i++) {
+            select.innerHTML += `<option value="${i}">${gambleAiNames[i]}</option>`;
+        }
+    }
+
+    function openGambleModal() {
+        document.getElementById('stock-gamblecheat').textContent = inventory.gambleCheat;
+        const wrap = document.getElementById('wrap-gamblecheat');
+        const input = document.getElementById('equip-gamblecheat');
+        if (inventory.gambleCheat <= 0) {
+            input.checked = false;
+            input.disabled = true;
+            wrap.classList.add('disabled');
+        } else {
+            input.disabled = false;
+            wrap.classList.remove('disabled');
+        }
+        updateGambleTeams();
+        showOverlay('gamble-overlay');
+    }
+
+    function closeGambleModal() {
+        showOverlay('none');
+    }
+
+    function startGambleGame() {
+        const cost = isDevMode ? 0 : 1200;
+        if (playerTotalMoney < cost) {
+            alert("❌ 金額不足！需要 $1200");
+            return;
+        }
+        playerTotalMoney -= cost;
+
+        usedGambleCheat = document.getElementById('equip-gamblecheat').checked && inventory.gambleCheat > 0;
+        if (usedGambleCheat) {
+            inventory.gambleCheat--;
+        }
+        
+        gambleAiCount = parseInt(document.getElementById('gamble-mode-select').value);
+        gambleChosenAiId = parseInt(document.getElementById('gamble-team-select').value);
+        
+        isGambleMode = true;
+        isVsMode = true;
+
+        saveGameData();
+        closeGambleModal();
+
+        document.getElementById('event-marquee').style.display = 'none';
+        sessionMoney = 0;
+        
+        gameTimeLeft = Math.floor(Math.random() * (240 - 120 + 1)) + 120;
+        
+        aiPlayers = [];
+        const aiContainer = document.getElementById('ai-boards-container');
+        aiContainer.innerHTML = '';
+        aiPauseTimer = 3.0; // 正常開局延遲
+
+        for(let i=0; i<gambleAiCount; i++) {
+            let ai = {
+                id: i,
+                name: gambleAiNames[i], color: gambleAiColors[i],
+                activeQueue: [], inventory: {}, customers: [], customerIndex: 65, servedCount: 0, maxQueue: 2
+            };
+            ITEMS.forEach(item => { ai.inventory[item.id] = 0; });
+            ai.customers.push(generateCustomer(false, ai));
+            ai.customers.push(generateCustomer(false, ai));
+            aiPlayers.push(ai);
+            aiContainer.innerHTML += createAiBoardHTML(ai);
+        }
+
+        document.getElementById('player-board').style.display = 'none';
+        document.getElementById('money-display-container').style.display = 'none';
+        document.getElementById('vs-score-display').style.display = 'flex';
+        
+        gameState = 'playing'; lastTime = Date.now(); showMainPanel('game-wrapper');
+
+        clearInterval(mainLoopId);
+        mainLoopId = setInterval(gameTick, 100);
+    }
+
+    function startGame(vsMode) {
+        isGambleMode = false;
+        isVsMode = vsMode;
+        
+        document.getElementById('player-board').style.display = 'flex';
+        document.getElementById('money-display-container').style.display = 'block';
+
+        const angelChecked = document.getElementById('equip-angel').checked;
+        const timeChecked = document.getElementById('equip-timecard').checked;
+        const autoCraftChecked = document.getElementById('equip-autocraft').checked;
+        const autoStirChecked = document.getElementById('equip-autostir').checked;
+        const aiPauseChecked = document.getElementById('equip-aipause').checked;
+        const slotSelect = document.querySelector('input[name="equip-slot"]:checked').value;
+
+        if (angelChecked && inventory.angel > 0) { hasAngelCard = true; inventory.angel--; } else { hasAngelCard = false; }
+        
+        if (timeChecked && inventory.timecard > 0) { usedTimeCard = true; timeReduction = 2; } 
+        else { usedTimeCard = false; timeReduction = 0; }
+
+        if (autoCraftChecked && inventory.autocraft > 0) {
+            usedAutoCraft = true; autoCraftProcessed = 0;
+        } else {
+            usedAutoCraft = false; autoCraftProcessed = 0;
+        }
+
+        if (autoStirChecked && inventory.autostir > 0) {
+            usedAutoStir = true;
+        } else {
+            usedAutoStir = false;
+        }
+
+        if (aiPauseChecked && inventory.aipause > 0) {
+            if (isVsMode) {
+                usedAiPause = true; 
+            } else {
+                alert("⚠️ 【電腦暫停卡】只限對戰模式使用，本次不消耗！");
+                document.getElementById('equip-aipause').checked = false;
+                usedAiPause = false;
+            }
+        } else {
+            usedAiPause = false;
+        }
+        
+        pMaxQueue = 2; usedSlotCard = 0; 
+        if (slotSelect === "1" && inventory.slot1 > 0) { pMaxQueue = 3; usedSlotCard = 1; } 
+        else if (slotSelect === "2" && inventory.slot2 > 0) { pMaxQueue = 4; usedSlotCard = 2; }
+
+        saveGameData();
+
+        document.getElementById('event-marquee').style.display = 'none';
+        document.getElementById('p-log-box').innerHTML = ''; 
+        
+        sessionMoney = 0; pActiveQueue = []; pCustomers = []; pSnacks = 2; angelTriggered = false; pServedCount = 0; pCustomerIndex = 65;
+        ITEMS.forEach(item => { pInventory[item.id] = 0; });
+        
+        gameTimeLeft = Math.floor(Math.random() * (240 - 120 + 1)) + 120; 
+        
+        renderMenu(); 
+        pCustomers.push(generateCustomer(true)); pCustomers.push(generateCustomer(true));
+        
+        aiPlayers = [];
+        const aiContainer = document.getElementById('ai-boards-container');
+        aiContainer.innerHTML = '';
+        
+        if (isVsMode) {
+            let aiCount = parseInt(document.getElementById('ai-count-select').value);
+            let aiNames = ["🤖 電腦", "👽 異星", "👾 駭客"];
+            let colors = ["#1976d2", "#9c27b0", "#e91e63"];
+            
+            aiPauseTimer = usedAiPause ? 9.0 : 3.0;
+
+            for(let i=0; i<aiCount; i++) {
+                let ai = {
+                    id: i,
+                    name: aiNames[i] || `電腦 ${i+1}`,
+                    color: colors[i] || "#1976d2",
+                    activeQueue: [], inventory: {}, customers: [], customerIndex: 65, servedCount: 0, maxQueue: 2
+                };
+                ITEMS.forEach(item => { ai.inventory[item.id] = 0; });
+                ai.customers.push(generateCustomer(false, ai));
+                ai.customers.push(generateCustomer(false, ai));
+                aiPlayers.push(ai);
+                aiContainer.innerHTML += createAiBoardHTML(ai);
+            }
+            document.getElementById('vs-score-display').style.display = 'flex';
+        } else {
+            document.getElementById('vs-score-display').style.display = 'none';
+        }
+        
+        gameState = 'playing'; lastTime = Date.now(); showMainPanel('game-wrapper');
+
+        addLog('p', `遊戲開始！限時 ${Math.floor(gameTimeLeft/60)}分${gameTimeLeft%60}秒。`);
+        if(hasAngelCard) addLog('p', "👼 裝備【天使卡】成功！");
+        if(usedTimeCard) addLog('p', "⏳ 裝備【產線減2秒卡】成功！");
+        if(usedAutoCraft) addLog('p', "🤖 裝備【自動製餐卡】成功！開局將自動服侍前2位客人！");
+        if(usedAutoStir) addLog('p', "🌪️ 裝備【自動攪拌卡】成功！攪拌將自動進行！");
+        if(isDevMode) addLog('p', "🛠️ 開發者模式啟動，各項特權已啟用！玩家製餐時間為1秒。");
+        
+        if(isVsMode) {
+            if(usedAiPause) {
+                aiPlayers.forEach(ai => addAiLog(ai.id, `🛑 受到【暫停卡】影響，將晚 9 秒行動！`));
+            } else {
+                aiPlayers.forEach(ai => addAiLog(ai.id, `🤖 預設等待 3 秒後開始動作...`));
+            }
+        }
+
+        clearInterval(mainLoopId);
+        mainLoopId = setInterval(gameTick, 100);
+    }
+
+    function createAiBoardHTML(ai) {
+        return `
+            <div class="game-board" id="ai-board-${ai.id}">
+                <div class="board-title ai" style="background:${ai.color};">${ai.name}營業區</div>
+                <div class="customers-wrapper">
+                    <div class="customer-card active" style="border-color: ${ai.color};">
+                        <div class="customer-header"><span id="a${ai.id}-c1-name">👤 載入中...</span><span style="font-size:11px;">耐心 <span id="a${ai.id}-c1-time">0</span>s</span></div>
+                        <div class="patience-bar-container"><div class="patience-fill" id="a${ai.id}-c1-patience-bar" style="background:${ai.color};"></div></div>
+                        <div class="order-list" id="a${ai.id}-c1-orders"></div>
+                        <!-- 電腦的攪拌顯示區域獨立放置 -->
+                        <div id="a${ai.id}-stir-container" style="display: none; width: 100%;"></div>
+                    </div>
+                    <div class="customer-card waiting">
+                        <div class="customer-header"><span id="a${ai.id}-c2-name">👤 等待中</span></div>
+                        <div class="order-list" id="a${ai.id}-c2-orders" style="justify-content: center;"></div>
+                    </div>
+                </div>
+                <div class="queue-section">
+                    <div class="queue-title">🔥 產線 (<span id="a${ai.id}-queue-count">0</span>/2)</div>
+                    <div class="queue-slots" id="a${ai.id}-queue-slots"></div>
+                </div>
+                <div class="ready-section">
+                    <div style="font-weight: bold; color: ${ai.color}; margin-bottom: 5px; font-size:12px;">🍱 庫存</div>
+                    <div class="inventory-list" id="a${ai.id}-inventory-list"></div>
+                </div>
+                <div class="log-box" id="a${ai.id}-log-box" style="margin-top:auto;"></div>
+            </div>
+        `;
+    }
+
+    function resetToHome() {
+        gameState = 'menu'; clearInterval(mainLoopId); 
+        
+        if (usedSlotCard === 1) { inventory.slot1--; }
+        else if (usedSlotCard === 2) { inventory.slot2--; }
+        if (usedTimeCard) { inventory.timecard--; }
+        if (usedAutoCraft) { inventory.autocraft--; }
+        if (usedAutoStir) { inventory.autostir--; }
+        if (usedAiPause) { inventory.aipause--; }
+        
+        usedSlotCard = 0; usedTimeCard = false; timeReduction = 0;
+        usedAutoCraft = false; usedAutoStir = false; usedAiPause = false;
+        
+        isGambleMode = false; usedGambleCheat = false; gambleChosenAiId = null;
+        document.getElementById('player-board').style.display = 'flex';
+        document.getElementById('money-display-container').style.display = 'block';
+
+        saveGameData();
+        showOverlay('none'); updateMenuUI(); showMainPanel('start-panel'); 
+    }
+
+    function pauseGame() { if(gameState === 'playing') { gameState = 'paused'; showOverlay('pause-overlay'); } }
+    function resumeGame() { if(gameState === 'paused') { gameState = 'playing'; lastTime = Date.now(); showOverlay('none'); } }
+
+    function instantWin() {
+        if (!isDevMode) return;
+        if (isGambleMode) {
+            const chosenAi = aiPlayers.find(a => a.id === gambleChosenAiId);
+            const otherAis = aiPlayers.filter(a => a.id !== gambleChosenAiId);
+            const maxOther = Math.max(...otherAis.map(a => a.servedCount), 0);
+            if(chosenAi) {
+                chosenAi.servedCount = maxOther + 1;
+            }
+        } else if (isVsMode) {
+            let maxAiScore = Math.max(...aiPlayers.map(ai => ai.servedCount), 0);
+            pServedCount = maxAiScore + 1;
+        }
+        gameTimeLeft = 0;
+    }
+
+    function endGame() {
+        gameState = 'gameover'; clearInterval(mainLoopId);
+        
+        const resultMsg = document.getElementById('vs-result-msg');
+        document.getElementById('score-text-wrapper').style.display = 'block';
+
+        if (isGambleMode) {
+            if (usedGambleCheat) {
+                const chosenAi = aiPlayers.find(a => a.id === gambleChosenAiId);
+                if (chosenAi) {
+                    chosenAi.servedCount += 2;
+                }
+            }
+
+            let chosenAi = aiPlayers.find(a => a.id === gambleChosenAiId);
+            let chosenAiScore = chosenAi.servedCount;
+            let otherAis = aiPlayers.filter(a => a.id !== gambleChosenAiId);
+            let maxOtherScore = Math.max(...otherAis.map(a => a.servedCount), 0);
+
+            let scoreBoard = `你支持的隊伍 (${chosenAi.name}) 分數: ${chosenAiScore}<br>`;
+            otherAis.forEach(a => {
+                scoreBoard += `${a.name} 分數: ${a.servedCount}<br>`;
+            });
+            
+            if (usedGambleCheat) scoreBoard += `<br><span style="color:#e91e63;">(作弊卡發動：結算分數已 +2)</span>`;
+
+            if (chosenAiScore > maxOtherScore) {
+                const rewardPool = [
+                    { id: 'angel', name: '👼 天使卡' },
+                    { id: 'timecard', name: '⏳ 產線秒數減2秒卡' },
+                    { id: 'autocraft', name: '🤖 自動製餐卡' },
+                    { id: 'autostir', name: '🌪️ 自動攪拌卡' },
+                    { id: 'aipause', name: '🛑 電腦暫停卡' },
+                    { id: 'slot1', name: '⚡ 升級格數*1格卡' },
+                    { id: 'slot2', name: '🚀 升級格數*2格卡' },
+                    { id: 'noElec', name: '🛡️ 免扣電費卡' },
+                    { id: 'noTax', name: '🛡️ 免扣營業稅卡' },
+                    { id: 'noAll', name: '🌟 免扣所有費卡' },
+                    { id: 'gambleCheat', name: '🃏 賭局模式作弊卡' }
+                ];
+                
+                // 4位電腦模式為雙倍獎勵 (發2張)
+                let rewardCount = gambleAiCount === 4 ? 2 : 1;
+                let wonRewards = [];
+                for(let i=0; i<rewardCount; i++) {
+                    const randReward = rewardPool[Math.floor(Math.random() * rewardPool.length)];
+                    inventory[randReward.id]++;
+                    wonRewards.push(`【${randReward.name}】`);
+                }
+                
+                resultMsg.innerHTML = `🎉 恭喜！你支持的隊伍獲勝了！<br><span style="color:#4caf50;">獲得獎勵：隨機獲得 ${wonRewards.join(", ")}！</span><br><br><span style="font-size:14px; font-weight:normal;">${scoreBoard}</span>`;
+            } else if (chosenAiScore < maxOtherScore) {
+                resultMsg.innerHTML = `💸 賭局失敗...你支持的隊伍輸了。<br><br><span style="font-size:14px; font-weight:normal;">${scoreBoard}</span>`;
+            } else {
+                resultMsg.innerHTML = `🤝 平手！無獎勵產生。<br><br><span style="font-size:14px; font-weight:normal;">${scoreBoard}</span>`;
+            }
+            document.getElementById('final-score').textContent = "0";
+            document.getElementById('score-text-wrapper').style.display = 'none';
+
+        } else if (isVsMode) {
+            document.getElementById('final-score').textContent = sessionMoney.toLocaleString();
+            let maxAiScore = Math.max(...aiPlayers.map(ai => ai.servedCount));
+            let winnerText = "";
+            
+            if (pServedCount > maxAiScore) {
+                const rewardPool = [
+                    { id: 'angel', name: '👼 天使卡' },
+                    { id: 'timecard', name: '⏳ 產線秒數減2秒卡' },
+                    { id: 'autocraft', name: '🤖 自動製餐卡' },
+                    { id: 'autostir', name: '🌪️ 自動攪拌卡' },
+                    { id: 'aipause', name: '🛑 電腦暫停卡' },
+                    { id: 'slot1', name: '⚡ 升級格數*1格卡' },
+                    { id: 'slot2', name: '🚀 升級格數*2格卡' },
+                    { id: 'noElec', name: '🛡️ 免扣電費卡' },
+                    { id: 'noTax', name: '🛡️ 免扣營業稅卡' },
+                    { id: 'noAll', name: '🌟 免扣所有費卡' },
+                    { id: 'gambleCheat', name: '🃏 賭局模式作弊卡' }
+                ];
+                const randReward = rewardPool[Math.floor(Math.random() * rewardPool.length)];
+                inventory[randReward.id]++;
+                winnerText = `🎉 恭喜勝利！服務人數最高！<br><span style="color:#4caf50;">獎勵：隨機獲得 1 張【${randReward.name}】！</span>`;
+            } else if (pServedCount < maxAiScore) {
+                winnerText = `💻 電腦勝利！再接再厲！`;
+            } else {
+                winnerText = `🤝 平手！服務人數與電腦相同。`;
+            }
+            
+            let scoreBoard = `您的服務數: ${pServedCount}<br>`;
+            aiPlayers.forEach(ai => { scoreBoard += `${ai.name} 服務數: ${ai.servedCount}<br>`; });
+            
+            resultMsg.innerHTML = `${winnerText}<br><br><span style="font-size:14px; font-weight:normal;">${scoreBoard}</span>`;
+        } else {
+            document.getElementById('final-score').textContent = sessionMoney.toLocaleString();
+            resultMsg.innerHTML = `完成了一局辛勤的營業！服務了 ${pServedCount} 位顧客。`;
+        }
+        showOverlay('gameover-overlay');
+    }
+
+    function collectAndReturnHome() {
+        if (!isGambleMode) {
+            playerTotalMoney += sessionMoney;
+            gamesPlayed++;
+        }
+        
+        if (usedSlotCard === 1) { inventory.slot1--; }
+        else if (usedSlotCard === 2) { inventory.slot2--; }
+        if (usedTimeCard) { inventory.timecard--; }
+        if (usedAutoCraft) { inventory.autocraft--; }
+        if (usedAutoStir) { inventory.autostir--; }
+        if (usedAiPause) { inventory.aipause--; }
+        usedSlotCard = 0; usedTimeCard = false; timeReduction = 0;
+        usedAutoCraft = false; usedAutoStir = false; usedAiPause = false;
+        
+        isGambleMode = false; usedGambleCheat = false; gambleChosenAiId = null;
+        document.getElementById('player-board').style.display = 'flex';
+        document.getElementById('money-display-container').style.display = 'block';
+
+        showOverlay('none'); 
+        settleGamesPlayed();
+        saveGameData();
+        updateMenuUI(); showMainPanel('start-panel');
+    }
+
+    function gameTick() {
+        if (gameState !== 'playing') return;
+        const now = Date.now(); const dt = (now - lastTime) / 1000; lastTime = now;
+        
+        gameTimeLeft -= dt;
+        if (gameTimeLeft <= 0) { endGame(); return; }
+
+        if (!isGambleMode) {
+            if (pCustomers.length > 0) {
+                if (!isDevMode) pCustomers[0].patienceLeft -= dt; 
+                if (pCustomers[0].patienceLeft <= 0) handlePlayerCustomerAngry();
+            }
+            while (pCustomers.length < 2) pCustomers.push(generateCustomer(true));
+
+            if (usedAutoStir && pCustomers.length > 0) {
+                if (pCustomers[0].stirItemId && pCustomers[0].stirStatus === 'pending') {
+                    startStirring(pCustomers[0].id);
+                }
+            }
+
+            if (usedAutoCraft && autoCraftProcessed < 2) {
+                playerAutoTick(dt);
+            }
+        }
+
+        if (isVsMode) {
+            if (aiPauseTimer > 0) {
+                aiPauseTimer -= dt;
+                if (aiPauseTimer <= 0) {
+                    aiPlayers.forEach(ai => addAiLog(ai.id, `準備就緒，開始營業！`));
+                }
+            } else {
+                aiPlayers.forEach(ai => aiTick(ai, dt));
+            }
+        }
+
+        updateGameUI();
+    }
+
+    function generateCustomer(isPlayer, aiObj=null) {
+        let index = isPlayer ? pCustomerIndex : aiObj.customerIndex;
+        const name = `客人 ${String.fromCharCode(index)}`;
+        if(isPlayer) pCustomerIndex = pCustomerIndex >= 90 ? 65 : pCustomerIndex + 1; 
+        else aiObj.customerIndex = aiObj.customerIndex >= 90 ? 65 : aiObj.customerIndex + 1;
+        
+        const pt = Math.floor(Math.random() * (35 - 25 + 1)) + 25; 
+        const reqs = {}; const shuffled = [...ITEMS].sort(() => 0.5 - Math.random());
+        const numItems = Math.floor(Math.random() * 3) + 1;
+        for(let i = 0; i < numItems; i++) reqs[shuffled[i].id] = Math.floor(Math.random() * 2) + 1; 
+        
+        let stirItemId = null;
+        if (Math.random() < 0.4) {
+            const keys = Object.keys(reqs);
+            stirItemId = parseInt(keys[Math.floor(Math.random() * keys.length)]);
+        }
+
+        return { 
+            id: Date.now() + Math.random(),
+            name: name, 
+            reqs: reqs, 
+            pTotal: pt, 
+            patienceLeft: pt, 
+            snackUsed: false,
+            stirItemId: stirItemId,
+            stirStatus: stirItemId ? 'pending' : 'none',
+            stirStartTime: 0
+        };
+    }
+
+    function handlePlayerCustomerAngry() {
+        const cName = pCustomers[0].name;
+        if (hasAngelCard && !angelTriggered) {
+            angelTriggered = true;
+            addLog('p', `👼 天使卡抵銷了 ${cName} 的生氣扣款！`);
+            const mc = document.getElementById('event-marquee');
+            mc.style.display = 'block'; setTimeout(() => { mc.style.display = 'none'; }, 8000); 
+        } else {
+            const oldMoney = sessionMoney; sessionMoney = Math.max(0, sessionMoney - 30);
+            addLog('p', `😡 ${cName} 等太久氣炸！損失 $${oldMoney - sessionMoney}。`);
+        }
+        pCustomers.shift(); 
+        
+        if (usedAutoCraft && autoCraftProcessed < 2) {
+            autoCraftProcessed++;
+            if (autoCraftProcessed >= 2) {
+                addLog('p', `🤖 自動製餐結束，產線交還給玩家！`);
+            }
+        }
+    }
+
+    function handleServeClick() {
+        if (usedAutoCraft && autoCraftProcessed < 2) {
+            addLog('p', '🤖 自動製餐中，請稍候...');
+            return;
+        }
+        servePlayerCustomer();
+    }
+
+    function servePlayerCustomer() {
+        if (pCustomers.length === 0) return;
+        const c = pCustomers[0]; 
+        
+        if (c.stirItemId && c.stirStatus !== 'done') {
+            addLog('p', `❌ 餐點尚有未攪拌完成之品項！`);
+            return;
+        }
+
+        let canServe = true; let profit = 0;
+        for (let id in c.reqs) {
+            if ((pInventory[id] || 0) < c.reqs[id]) { canServe = false; break; }
+            profit += ITEMS.find(i => i.id == id).price * c.reqs[id];
+        }
+        if (!canServe) { addLog('p', `❌ 備餐尚未齊全！`); return; }
+        for (let id in c.reqs) pInventory[id] -= c.reqs[id];
+        sessionMoney += profit; pServedCount++;
+        addLog('p', `🎉 送餐給 ${c.name}，獲得 $${profit}！`);
+        pCustomers.shift(); 
+        updateGameUI();
+
+        if (usedAutoCraft && autoCraftProcessed < 2) {
+            autoCraftProcessed++;
+            if (autoCraftProcessed >= 2) {
+                addLog('p', `🤖 自動製餐結束，產線交還給玩家！`);
+            }
+        }
+    }
+
+    function handleSnackClick() {
+        if (usedAutoCraft && autoCraftProcessed < 2) {
+            addLog('p', '🤖 自動製餐中，無法安撫...');
+            return;
+        }
+        usePlayerSnack();
+    }
+
+    function usePlayerSnack() {
+        if (pCustomers.length === 0) return;
+        const c = pCustomers[0];
+        const snackCost = isDevMode ? 0 : 20;
+        if (pSnacks <= 0 || c.snackUsed || sessionMoney < snackCost) return;
+        sessionMoney -= snackCost; pSnacks--; c.snackUsed = true; c.patienceLeft = c.pTotal; 
+        addLog('p', `🍪 安撫了 ${c.name}，耐心已重置！`); updateGameUI();
+    }
+
+    function startPlayerCrafting(item) {
+        if (pActiveQueue.length >= pMaxQueue) return;
+        const actualTime = isDevMode ? 1 : Math.max(1, item.time - timeReduction);
+        const task = { id: Date.now()+Math.random(), item: item, start: Date.now(), dur: actualTime * 1000 };
+        pActiveQueue.push(task);
+        setTimeout(() => {
+            if(pActiveQueue.find(t => t.id === task.id)) {
+                pActiveQueue = pActiveQueue.filter(t => t.id !== task.id); pInventory[item.id]++;
+            }
+        }, task.dur);
+    }
+
+    function startStirring(cId) {
+        if (usedAutoCraft && autoCraftProcessed < 2 && !usedAutoStir) return; 
+        const c = pCustomers.find(cust => cust.id === cId);
+        if (!c || c.stirStatus !== 'pending') return;
+        
+        c.stirStatus = 'stirring';
+        c.stirStartTime = Date.now();
+        updateGameUI();
+        
+        setTimeout(() => {
+            if (pCustomers.includes(c)) { 
+                c.stirStatus = 'done';
+                updateGameUI();
+            }
+        }, 3000); 
+    }
+
+    function playerAutoTick(dt) {
+        if (pCustomers.length === 0) return;
+        const c = pCustomers[0];
+        
+        let itemsReady = true;
+        for (let id in c.reqs) if ((pInventory[id] || 0) < c.reqs[id]) { itemsReady = false; break; }
+
+        if (itemsReady) {
+            if (!c.stirItemId || c.stirStatus === 'done') {
+                servePlayerCustomer();
+                return;
+            }
+        }
+
+        if (pActiveQueue.length < pMaxQueue) {
+            for (let id in c.reqs) {
+                let req = c.reqs[id]; let ready = pInventory[id] || 0;
+                let crafting = pActiveQueue.filter(t => t.item.id == id).length;
+                if (ready + crafting < req && pActiveQueue.length < pMaxQueue) {
+                    const item = ITEMS.find(i => i.id == id);
+                    startPlayerCrafting(item);
+                    addLog('p', `🤖 自動製餐：開始製作 ${item.name.replace(/\(\d+\)\s*/, '')}`);
+                }
+            }
+        }
+    }
+
+    function aiTick(ai, dt) {
+        if (ai.customers.length > 0) {
+            ai.customers[0].patienceLeft -= dt; // AI 永遠照常扣耐心 (無視開發者模式)
+            if (ai.customers[0].patienceLeft <= 0) { 
+                addAiLog(ai.id, `😡 ${ai.customers[0].name} 生氣離開了！`); 
+                ai.customers.shift(); 
+            }
+        }
+        while (ai.customers.length < 2) ai.customers.push(generateCustomer(false, ai));
+        const c = ai.customers[0]; if(!c) return;
+        
+        let itemsReady = true;
+        for (let id in c.reqs) if ((ai.inventory[id] || 0) < c.reqs[id]) { itemsReady = false; break; }
+        
+        if (itemsReady) {
+            if (c.stirItemId && c.stirStatus === 'pending') {
+                c.stirStatus = 'stirring';
+                c.stirStartTime = Date.now();
+                addAiLog(ai.id, `自動進行攪拌...`);
+            } else if (c.stirItemId && c.stirStatus === 'stirring') {
+                if (Date.now() - c.stirStartTime >= 6000) { 
+                    c.stirStatus = 'done';
+                    addAiLog(ai.id, `攪拌完成！`);
+                }
+            } else if (!c.stirItemId || c.stirStatus === 'done') {
+                for (let id in c.reqs) ai.inventory[id] -= c.reqs[id];
+                ai.servedCount++; addAiLog(ai.id, `自動出餐給 ${c.name} 完成！`);
+                ai.customers.shift(); return;
+            }
+        }
+
+        if (ai.activeQueue.length < ai.maxQueue) {
+            for (let id in c.reqs) {
+                let req = c.reqs[id]; let ready = ai.inventory[id] || 0;
+                let crafting = ai.activeQueue.filter(t => t.item.id == id).length;
+                if (ready + crafting < req && ai.activeQueue.length < ai.maxQueue) {
+                    const item = ITEMS.find(i => i.id == id);
+                    const actualTime = Math.max(1, item.time - timeReduction); 
+                    const task = { id: Date.now()+Math.random(), item: item, start: Date.now(), dur: actualTime * 1000 };
+                    ai.activeQueue.push(task); 
+                    addAiLog(ai.id, `開始製作 ${item.name.replace(/\(\d+\)\s*/, '')}`);
+                    setTimeout(() => {
+                        if(ai.activeQueue.find(t => t.id === task.id)) { 
+                            ai.activeQueue = ai.activeQueue.filter(t => t.id !== task.id); 
+                            ai.inventory[item.id]++; 
+                        }
+                    }, task.dur);
+                }
+            }
+        }
+    }
+
+    function renderMenu() {
+        const grid = document.getElementById('menu-grid'); grid.innerHTML = '';
+        ITEMS.forEach(item => {
+            const actualTime = isDevMode ? 1 : Math.max(1, item.time - timeReduction);
+            const card = document.createElement('div'); card.className = 'menu-card';
+            card.onclick = () => { startPlayerCrafting(item); };
+            card.innerHTML = `<img src="${item.img}" class="menu-img" onerror="this.src='https://via.placeholder.com/45'"><div class="menu-name">${item.name.replace(/\(\d+\)\s*/, '')}</div><div class="menu-info">${actualTime}s | $${item.price}</div>`;
+            grid.appendChild(card);
+        });
+    }
+
+    function updateGameUI() {
+        if(!isGambleMode) {
+            document.getElementById('money').textContent = sessionMoney.toLocaleString();
+        }
+        const m = Math.floor(Math.max(0, gameTimeLeft) / 60); const s = Math.floor(Math.max(0, gameTimeLeft) % 60);
+        document.getElementById('game-timer').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        
+        if (!isGambleMode && pCustomers[0]) {
+            const c = pCustomers[0];
+            document.getElementById('p-c1-name').textContent = `👤 ${c.name}`;
+            document.getElementById('p-c1-time').textContent = isDevMode ? "∞ " : Math.ceil(c.patienceLeft);
+            const pct = isDevMode ? 100 : Math.max(0, (c.patienceLeft / c.pTotal) * 100);
+            const bar = document.getElementById('p-c1-patience-bar'); bar.style.width = `${pct}%`;
+            bar.style.background = isDevMode ? '#9c27b0' : (pct > 50 ? '#4caf50' : (pct > 20 ? '#ffeb3b' : '#f44336'));
+            renderOrders(c, 'p-c1-orders', pInventory, false);
+            
+            const sBtn = document.getElementById('p-snack-btn');
+            const snackCost = isDevMode ? 0 : 20;
+            sBtn.disabled = c.snackUsed || pSnacks <= 0 || sessionMoney < snackCost;
+            sBtn.textContent = c.snackUsed ? "已安撫" : `🍪 (-$${snackCost}) ${pSnacks}`;
+
+            // 玩家攪拌區更新
+            const stirContainer = document.getElementById('p-stir-container');
+            if (c.stirItemId) {
+                stirContainer.style.display = 'block';
+                const itemName = ITEMS.find(i => i.id == c.stirItemId).name.replace(/\(\d+\)\s*/, '');
+                if (c.stirStatus === 'pending') {
+                    stirContainer.innerHTML = `<button class="stir-btn" onclick="startStirring(${c.id})">🌀 攪拌 ${itemName}</button>`;
+                } else if (c.stirStatus === 'stirring') {
+                    let stirPct = 0;
+                    if (c.stirStartTime) stirPct = Math.min(100, ((Date.now() - c.stirStartTime) / 3000) * 100);
+                    stirContainer.innerHTML = `<button class="stir-btn stirring" disabled>🌀 攪拌中...</button>
+                                               <div class="stir-progress-bg"><div class="stir-progress-fill" style="width:${stirPct}%"></div></div>`;
+                } else if (c.stirStatus === 'done') {
+                    stirContainer.innerHTML = `<button class="stir-btn stir-done" disabled>✅ 攪拌完成</button>
+                                               <div class="stir-progress-bg"><div class="stir-progress-fill" style="width:100%"></div></div>`;
+                }
+            } else {
+                stirContainer.style.display = 'none';
+                stirContainer.innerHTML = '';
+            }
+        }
+        
+        if (!isGambleMode && pCustomers[1]) renderOrders(pCustomers[1], 'p-c2-orders', pInventory, true);
+        
+        if (!isGambleMode) {
+            document.getElementById('p-queue-count').textContent = pActiveQueue.length;
+            document.getElementById('p-max-queue').textContent = pMaxQueue;
+            renderQueue(pActiveQueue, pMaxQueue, 'p-queue-slots'); renderInv(pInventory, 'p-inventory-list');
+        }
+
+        if (isVsMode) {
+            let vsDisplay = isGambleMode ? `🎲 賭局模式 | ` : `🏆 玩家: ${pServedCount} | `;
+            aiPlayers.forEach(ai => {
+                vsDisplay += `<span style="color:${ai.color};">${ai.name}: ${ai.servedCount}</span> | `;
+                
+                if (ai.customers[0]) {
+                    const c = ai.customers[0];
+                    document.getElementById(`a${ai.id}-c1-name`).textContent = `👤 ${c.name}`;
+                    document.getElementById(`a${ai.id}-c1-time`).textContent = Math.ceil(c.patienceLeft); // AI無無限耐心
+                    const pct = Math.max(0, (c.patienceLeft / c.pTotal) * 100); // AI正常進度條
+                    const bar = document.getElementById(`a${ai.id}-c1-patience-bar`);
+                    bar.style.width = `${pct}%`; bar.style.background = ai.color; // 正常顏色
+                    renderOrders(c, `a${ai.id}-c1-orders`, ai.inventory, false);
+
+                    // AI 攪拌區更新
+                    const aiStirContainer = document.getElementById(`a${ai.id}-stir-container`);
+                    if (c.stirItemId) {
+                        aiStirContainer.style.display = 'block';
+                        const itemName = ITEMS.find(i => i.id == c.stirItemId).name.replace(/\(\d+\)\s*/, '');
+                        if (c.stirStatus === 'pending') {
+                            aiStirContainer.innerHTML = `<button class="stir-btn" disabled style="opacity:0.6; cursor:not-allowed;">等待攪拌 ${itemName}</button>`;
+                        } else if (c.stirStatus === 'stirring') {
+                            let stirPct = 0;
+                            if (c.stirStartTime) stirPct = Math.min(100, ((Date.now() - c.stirStartTime) / 6000) * 100);
+                            aiStirContainer.innerHTML = `<button class="stir-btn stirring" disabled>攪拌中...</button>
+                                                       <div class="stir-progress-bg"><div class="stir-progress-fill" style="width:${stirPct}%"></div></div>`;
+                        } else if (c.stirStatus === 'done') {
+                            aiStirContainer.innerHTML = `<button class="stir-btn stir-done" disabled>✅ 攪拌完成</button>
+                                                       <div class="stir-progress-bg"><div class="stir-progress-fill" style="width:100%"></div></div>`;
+                        }
+                    } else {
+                        aiStirContainer.style.display = 'none';
+                        aiStirContainer.innerHTML = '';
+                    }
+                }
+                if (ai.customers[1]) renderOrders(ai.customers[1], `a${ai.id}-c2-orders`, ai.inventory, true);
+                
+                document.getElementById(`a${ai.id}-queue-count`).textContent = ai.activeQueue.length;
+                renderQueue(ai.activeQueue, ai.maxQueue, `a${ai.id}-queue-slots`); renderInv(ai.inventory, `a${ai.id}-inventory-list`, ai.color);
+            });
+            document.getElementById('vs-score-display').innerHTML = vsDisplay.slice(0, -3);
+        }
+    }
+
+    function renderOrders(c, elId, inv, isPreview=false) {
+        const el = document.getElementById(elId); el.innerHTML = '';
+        for (let id in c.reqs) {
+            const req = c.reqs[id]; const ready = inv[id] || 0; const isDone = ready >= req;
+            const item = ITEMS.find(i => i.id == id);
+            const div = document.createElement('div'); div.className = `order-item ${isDone && !isPreview ? 'done' : ''}`;
+            
+            let topHtml = `<div class="order-item-top"><img src="${item.img}" onerror="this.src='https://via.placeholder.com/20'"><div style="display:flex; flex-direction:column; line-height:1.2;"><b>${item.name.replace(/\(\d+\)\s*/, '')}</b><div style="display:flex; justify-content:space-between;"><span>x${req}</span>${!isPreview ? `<small>(${ready}/${req})</small>` : ''}</div></div></div>`;
+            div.innerHTML = topHtml;
+            el.appendChild(div);
+        }
+    }
+
+    function renderQueue(queue, max, elId) {
+        const el = document.getElementById(elId); el.innerHTML = '';
+        for (let i = 0; i < max; i++) {
+            const slot = document.createElement('div'); slot.className = 'queue-slot';
+            if (queue[i]) {
+                const t = queue[i]; const pct = Math.min(100, ((Date.now() - t.start) / t.dur) * 100);
+                slot.innerHTML = `<b>${t.item.name.replace(/\(\d+\)\s*/, '')}</b><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div>`;
+            } else slot.innerHTML = `<span style="color:#ccc;">空閒</span>`;
+            el.appendChild(slot);
+        }
+    }
+
+    function renderInv(inv, elId, badgeBorderColor='#81c784') {
+        const el = document.getElementById(elId); el.innerHTML = ''; let has = false;
+        ITEMS.forEach(item => {
+            const c = inv[item.id] || 0;
+            if (c > 0) { 
+                has = true; 
+                el.innerHTML += `<div class="inventory-badge" style="border-color:${badgeBorderColor}; color:${badgeBorderColor};">${item.name.replace(/\(\d+\)\s*/, '')} x${c}</div>`; 
+            }
+        });
+        if (!has) el.innerHTML = `<span style="color: #888; font-size:11px;">無</span>`;
+    }
+
+    function addLog(target, msg) {
+        const el = document.getElementById(target === 'p' ? 'p-log-box' : 'a-log-box'); 
+        if(el) {
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toLocaleTimeString('zh-TW', {hour12:false})}] ${msg}`;
+            el.prepend(div);
+        }
+    }
+    
+    function addAiLog(aiId, msg) {
+        const el = document.getElementById(`a${aiId}-log-box`);
+        if(el) {
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toLocaleTimeString('zh-TW', {hour12:false})}] ${msg}`;
+            el.prepend(div);
+        }
+    }
+
+    window.onload = () => {
+        loadGameData();
+        updateMenuUI();
+    };
+</script>
+
+</body>
+</html>

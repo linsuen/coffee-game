@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- APP 全螢幕與圖標設定支援 -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1f1815">
+    
+    <title>夢幻飲料店經營 - 遊戲說明</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; user-select: none; }
+        body { background-color: #1f1815; color: #333; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; overflow-x: hidden; }
+
+        .header-container { width: 100%; max-width: 900px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-shrink: 0; }
+        .system-marquee { flex: 1; background: #1a1412; color: #fff; padding: 12px 0; font-size: 22px; font-weight: 900; border-radius: 12px; border: 3px solid #ff9800; box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2); overflow: hidden; white-space: nowrap; margin-bottom: 0; }
+        .system-marquee-content { display: inline-block; padding-left: 100%; animation: scrollMarquee 40s linear infinite; }
+        .system-marquee-content span { margin-right: 50px; color: #ffb74d; }
+        @keyframes scrollMarquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+        .bgm-btn { padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer; border: none; color: white; white-space: nowrap; flex-shrink: 0; transition: 0.1s; box-shadow: 0 4px #c66900; }
+        .bgm-btn:active { transform: translateY(4px); box-shadow: 0 0px #c66900; }
+        .bgm-btn.playing { background: #ff9800; box-shadow: 0 4px #d87d00; }
+        .bgm-btn.playing:active { box-shadow: 0 0px #d87d00; }
+        .bgm-btn.muted { background: #9e9e9e; box-shadow: 0 4px #616161; }
+        .bgm-btn.muted:active { box-shadow: 0 0px #616161; }
+
+        .panel { background: #fff8ee; border: 5px solid #8c6239; border-radius: 20px; padding: 30px; width: 100%; max-width: 750px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .panel h1 { margin-top: 0; color: #5c3a21; font-size: 28px; margin-bottom: 20px; text-align: center; border-bottom: 3px dashed #d9b382; padding-bottom: 10px;}
+        
+        .section-title { font-size: 20px; font-weight: bold; color: #d32f2f; margin-top: 20px; margin-bottom: 10px; display: flex; align-items: center;}
+        .section-title::before { content: '✨'; margin-right: 8px; }
+        
+        .info-card { background: #fff; border: 2px solid #e2c097; border-radius: 12px; padding: 15px; margin-bottom: 15px; font-size: 15px; line-height: 1.6; color: #5c3a21;}
+        .info-card strong { color: #d32f2f; }
+        .info-card ul { list-style: none; padding-left: 0; margin-top: 15px; }
+        .info-card li { display: flex; align-items: center; margin-bottom: 20px; }
+        .card-icon { width: 80px; height: 80px; object-fit: contain; margin-right: 15px; flex-shrink: 0; border-radius: 8px; cursor: zoom-in; }
+
+        .btn { background: #4caf50; color: white; border: none; padding: 14px 20px; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; box-shadow: 0 4px #2e7d32; transition: 0.1s; display: block; width: 100%; text-align: center; margin-top: 25px; text-decoration: none;}
+        .btn:active { transform: translateY(4px); box-shadow: 0 0px #2e7d32; }
+        .btn.blue { background: #2196f3; box-shadow: 0 4px #1976d2; }
+        .btn.blue:active { box-shadow: 0 0px #1976d2; }
+
+        /* 圖片預覽彈窗專用 */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; cursor: zoom-out; }
+        #enlarged-image { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 12px; border: 4px solid #fff; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
+    </style>
+</head>
+<body>
+
+    <audio id="bgm" src="cm.mp3" loop preload="auto"></audio>
+
+    <div class="header-container">
+        <div class="system-marquee">
+            <div class="system-marquee-content">
+                <span>📢 歡迎遊玩刺激的咖啡廳經營小遊戲，體驗與客人接單刺激的送餐快感吧。</span>
+                <span>👼 天使卡可以保護玩家免受到顧客的攻擊一次，歡迎多多妥善使用。</span>
+                <span>⚡ 提升製餐效率，可以透過擴充方式增加製餐格數。</span>
+                <span>📢 累積遊玩局數到達5局被扣費?趕緊前往商店購買保險卡。</span>
+                <span>📢 想要在起跑點不被輾壓，前往商城購買【自動製餐卡】，可以幫你服務前兩位顧客。</span>
+                <span>📢 攪拌耽誤備餐手速?趕緊前往商店購買【自動攪拌卡】吧。</span>
+                <span>📢 電腦玩家速度超乎你的想像?【電腦暫停卡】幫你解決前期煩惱，現正推出。</span>
+            </div>
+        </div>
+        <button id="bgm-toggle-btn" class="bgm-btn playing" onclick="toggleBgm()">🔊 音樂靜音</button>
+    </div>
+
+    <div class="panel">
+        <h1>☕ 遊戲玩法說明</h1>
+
+        <div class="section-title">基本玩法 (開始營業)</div>
+        <div class="info-card">
+            歡迎來到夢幻飲料店！客人的耐心是有限的，請盡快按照客人的訂單需求，點擊下方菜單進行「製餐」。<br>
+            當庫存內集齊客人的所有餐點後，即可點擊 <strong>[🚚 出餐]</strong> 獲取利潤。<br>
+            ⚠️ 若部分餐點需要攪拌，請等待產線製作完成後，手動點擊 <strong>[🌀 攪拌]</strong> (需耗時 3 秒)，攪拌完成才能出餐。
+        </div>
+
+        <div class="section-title">稅金與營業成本</div>
+        <div class="info-card">
+            每營業 <strong>5局</strong> 將進行一次總結算，固定扣除：<br>
+            💸 營業稅金 $600 + ⚡ 電費 $400，共計 <strong>$1000</strong>。<br>
+            您可以前往「商店」購買相對應的保險卡 (如免扣電費卡、免扣所有費卡) 來減免成本。
+        </div>
+
+        <div class="section-title">卡片道具介紹</div>
+        <div class="info-card">
+            在開始遊戲前，您可以勾選要裝備的消耗性卡片 (每局消耗1張)：
+            <ul>
+                <li><img src="c1.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>👼 天使卡：</strong>抵擋一次客人因耐心耗盡生氣而導致的扣款 ($30)。</div></li>
+                <li><img src="c2.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>⏳ 產線秒數減2秒卡：</strong>大幅提升您的製餐速度！</div></li>
+                <li><img src="c3.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🤖 自動製餐卡：</strong>開局自動替您完美服務前2位客人，讓您輕鬆度過前期。</div></li>
+                <li><img src="c4.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🌪️ 自動攪拌卡：</strong>讓您免去手動攪拌的煩惱，自動進入攪拌狀態。</div></li>
+                <li><img src="c5.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🛑 電腦暫停卡：</strong>(僅限對戰模式) 讓所有電腦對手開局發呆 9 秒！</div></li>
+                <li><img src="c6.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🃏 賭局模式作弊卡：</strong>(僅限賭局模式) 保障您押注的隊伍在結算時額外 +2 分！</div></li>
+                <li><img src="c7.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>⚡ 升級格數*1格卡：</strong>該局製餐產線上限 +1。</div></li>
+                <li><img src="c8.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🚀 升級格數*2格卡：</strong>該局製餐產線上限 +2。</div></li>
+                <li><img src="c9.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🛡️ 免扣電費卡：</strong>滿5局時免扣電費 $400。</div></li>
+                <li><img src="c10.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🛡️ 免扣營業稅卡：</strong>滿5局時免扣營業稅 $600。</div></li>
+                <li><img src="c11.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"><div><strong>🌟 免扣所有費卡：</strong>滿5局時免扣所有費 $1000。</div></li>
+            </ul>
+        </div>
+
+        <div class="section-title">⚔️ 電腦對戰模式</div>
+        <div class="info-card">
+            與各路 AI 好手 (機器人、異星人、駭客等) 比拼接單手速！<br>
+            限時內誰服務的顧客人數最多即為優勝。<br>
+            <strong>🏆 勝利獎勵：</strong>隨機獲得商店內販售的任意卡片 1 張！(若平手或失敗則無獎勵)。
+        </div>
+
+        <div class="section-title">🎲 賭局模式</div>
+        <div class="info-card">
+            <strong>觀戰收穫豐厚獎勵！</strong><br>
+            花費 $1200 觀賞各路電腦玩家互相廝殺。<br>
+            您可以選擇押注 <strong>2位電腦</strong> (一般獎勵) 或 <strong>4位電腦</strong> (雙倍獎勵) 模式，並在開賽前選擇您心儀的隊伍。<br>
+            如果你押中的隊伍獲得了最終勝利，您將獲得卡片作為獎賞 (2人模式 1 張；4人模式 2 張)。<br>
+            您也可以使用 <strong>🃏 賭局模式作弊卡</strong> 來確保優勢！
+        </div>
+
+        <a href="game.html" class="btn blue">🔙 返回遊戲首頁</a>
+    </div>
+
+    <!-- 圖片預覽放大彈窗 -->
+    <div id="image-viewer-overlay" class="overlay" onclick="closeImageViewer()">
+        <img id="enlarged-image" src="">
+    </div>
+
+    <script>
+        function openImageViewer(event, src) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            document.getElementById('enlarged-image').src = src;
+            document.getElementById('image-viewer-overlay').style.display = 'flex';
+        }
+
+        function closeImageViewer() {
+            document.getElementById('image-viewer-overlay').style.display = 'none';
+            document.getElementById('enlarged-image').src = '';
+        }
+
+        // 音樂控制
+        const bgm = document.getElementById('bgm');
+        const bgmBtn = document.getElementById('bgm-toggle-btn');
+        let isMuted = localStorage.getItem('dreamCafeBgm') === 'muted';
+
+        function applyBgmState() {
+            if (isMuted) {
+                bgm.pause();
+                bgmBtn.textContent = '🔇 音樂開始';
+                bgmBtn.className = 'bgm-btn muted';
+            } else {
+                bgm.play().catch(e => console.log("Autoplay blocked:", e));
+                bgmBtn.textContent = '🔊 音樂靜音';
+                bgmBtn.className = 'bgm-btn playing';
+            }
+        }
+
+        function toggleBgm() {
+            isMuted = !isMuted;
+            localStorage.setItem('dreamCafeBgm', isMuted ? 'muted' : 'playing');
+            applyBgmState();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.body.addEventListener('click', () => {
+                if (!isMuted && bgm.paused) {
+                    bgm.play().catch(e => console.log(e));
+                }
+            }, { once: true });
+            applyBgmState();
+        });
+    </script>
+</body>
+</html>
