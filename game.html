@@ -12,15 +12,17 @@
     <title>夢幻飲料店經營</title>
     <style>
         * { box-sizing: border-box; font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; user-select: none; }
-        body { background-color: #1f1815; color: #333; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; overflow-x: hidden; }
+        /* 增加 top padding 讓固定的跑馬燈不會遮擋內容 */
+        body { background-color: #1f1815; color: #333; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 75px 20px 20px 20px; overflow-x: hidden; }
 
-        .header-container { width: 100%; max-width: 900px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-shrink: 0; }
-        .system-marquee { flex: 1; background: #1a1412; color: #fff; padding: 12px 0; font-size: 22px; font-weight: 900; border-radius: 12px; border: 3px solid #ff9800; box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2); overflow: hidden; white-space: nowrap; margin-bottom: 0; }
+        /* 修改為懸浮固定在頂端 */
+        .header-container { position: fixed; top: 0; left: 0; width: 100%; max-width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 20px; background: rgba(26, 20, 18, 0.85); backdrop-filter: blur(4px); z-index: 10000; border-bottom: 2px solid #ff9800; box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2); }
+        .system-marquee { flex: 1; max-width: 900px; color: #fff; font-size: 18px; font-weight: 900; overflow: hidden; white-space: nowrap; }
         .system-marquee-content { display: inline-block; padding-left: 100%; animation: scrollMarquee 40s linear infinite; }
         .system-marquee-content span { margin-right: 50px; color: #ffb74d; }
         @keyframes scrollMarquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-        .bgm-btn { padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 12px; cursor: pointer; border: none; color: white; white-space: nowrap; flex-shrink: 0; transition: 0.1s; }
+        .bgm-btn { padding: 8px 15px; font-size: 14px; font-weight: bold; border-radius: 12px; cursor: pointer; border: none; color: white; white-space: nowrap; flex-shrink: 0; transition: 0.1s; }
         .bgm-btn:active { transform: translateY(4px); }
         .bgm-btn.playing { background: #ff9800; box-shadow: 0 4px #d87d00; }
         .bgm-btn.playing:active { box-shadow: 0 0px #d87d00; }
@@ -69,6 +71,8 @@
         .btn.blue:active { box-shadow: 0 0px #1976d2; }
         .btn.dev { background: #9c27b0; box-shadow: 0 4px #7b1fa2; }
         .btn.dev:active { box-shadow: 0 0px #7b1fa2; }
+        .btn.rank { background: #fbc02d; box-shadow: 0 4px #f57f17; color: #3d2314; }
+        .btn.rank:active { box-shadow: 0 0px #f57f17; }
         .btn.small { padding: 6px 12px; font-size: 12px; margin: 0; box-shadow: 0 3px #1976d2;}
         .btn.small:active { box-shadow: 0 0px #1976d2; transform: translateY(3px); }
 
@@ -105,12 +109,13 @@
         .order-item.done img { opacity: 0.6; }
 
         .actions-row { display: flex; gap: 8px; margin-top: auto; }
-        .serve-btn, .snack-btn { border: none; padding: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 15px;}
+        /* 縮小出餐與安撫按鈕 */
+        .serve-btn, .snack-btn { border: none; padding: 6px 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 12px;}
         .serve-btn { flex: 1; background: #4caf50; color: white; box-shadow: 0 4px #2e7d32; }
         .snack-btn { background: #03a9f4; color: white; box-shadow: 0 4px #0288d1;}
         .snack-btn:disabled { background: #b0bec5; box-shadow: 0 4px #90a4ae; cursor: not-allowed; }
 
-        .stir-btn { background: #ff9800; color: #fff; border: none; border-radius: 8px; font-size: 16px; padding: 12px; font-weight: bold; cursor: pointer; text-align: center; width: 100%; box-shadow: 0 4px #d87d00; transition: 0.1s;}
+        .stir-btn { background: #ff9800; color: #fff; border: none; border-radius: 8px; font-size: 14px; padding: 8px; font-weight: bold; cursor: pointer; text-align: center; width: 100%; box-shadow: 0 4px #d87d00; transition: 0.1s;}
         .stir-btn.stirring { background: #9e9e9e; cursor: not-allowed; box-shadow: 0 4px #616161;}
         .stir-btn.stir-done { background: #4caf50; cursor: default; box-shadow: 0 4px #2e7d32;}
 
@@ -138,17 +143,39 @@
         .log-box { background: #fff; border: 1px solid #d9b382; height: 50px; border-radius: 8px; padding: 5px; overflow-y: auto; font-size: 11px; color: #666; margin-top: 10px; }
 
         .edit-money-btn { background: none; border: none; cursor: pointer; font-size: 18px; margin-left: 5px; display: none; }
+
+        /* 懸浮比分看板 */
+        #floating-score-board {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(31, 24, 21, 0.85);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 2px solid #ff9800;
+            z-index: 9999;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: none;
+            backdrop-filter: blur(4px);
+            white-space: nowrap;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
 <audio id="bgm" src="cm.mp3" loop preload="auto"></audio>
 
+<!-- 懸浮跑馬燈與音樂控制（固定頂端） -->
 <div class="header-container">
     <div class="system-marquee">
         <div class="system-marquee-content">
             <span>📢 歡迎遊玩刺激的咖啡廳經營小遊戲，體驗與客人接單刺激的送餐快感吧。</span>
-            <span>👼 天使卡可以保護玩家免受到顧客的攻擊一次，歡迎多多妥善使用。</span>
+            <span>👼 天使卡可以保護玩家免受到顧客生氣扣款一次($150)，歡迎多多妥善使用。</span>
             <span>⚡ 提升製餐效率，可以透過擴充方式增加製餐格數。</span>
             <span>📢 累積遊玩局數到達5局被扣費?趕緊前往商店購買保險卡。</span>
             <span>📢 想要在起跑點不被輾壓，前往商城購買【自動製餐卡】，可以幫你服務前兩位顧客。</span>
@@ -159,6 +186,9 @@
     <button id="bgm-toggle-btn" class="bgm-btn playing" onclick="toggleBgm()">🔊 音樂靜音</button>
 </div>
 
+<!-- 懸浮比分看板（預設隱藏） -->
+<div id="floating-score-board"></div>
+
 <div class="view-container">
     
     <!-- 首頁 -->
@@ -167,6 +197,13 @@
         <div class="info-box">
             💰 擁有金額: $<span id="menu-money-display">0</span><button class="edit-money-btn" id="edit-money-btn" onclick="editMoney()">✏️</button><br>
             <span style="font-size: 14px; color: #d32f2f;">🗓️ 已累積遊玩局數: <span id="games-played-display">0</span> / 5 (滿5局將扣除電費與稅金共$1000)</span>
+            
+            <div style="margin-top: 10px; color: #e91e63; font-weight: bold; background: #fdf3e7; padding: 5px; border-radius: 8px; border: 1px dashed #d9b382;">
+                🏅 排位段位: <span id="menu-rank-display">🥉 青銅 (0/5)</span>
+                <button class="btn dev small" id="dev-add-rank-btn" style="display:none; background:#ffb300; color:#333; margin-left: 5px;" onclick="devAddRank()">牌位加分</button>
+                <button class="btn dev small" id="dev-sub-rank-btn" style="display:none; background:#f44336; color:#fff; margin-left: 5px;" onclick="devSubRank()">排位減分</button>
+            </div>
+            
             <div style="margin-top: 5px;">
                 <button class="btn blue small" id="dev-max-games-btn" style="display:none;" onclick="triggerMaxGames()">局數擴充滿 (開發者測試)</button>
             </div>
@@ -176,7 +213,7 @@
             <div class="equipment-title">🎒 戰前裝備 (單局消耗品)</div>
             <div class="equip-item" id="wrap-angel">
                 <input type="checkbox" id="equip-angel">
-                <label for="equip-angel"><img src="c1.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 啟用【天使卡】(抵擋一次顧客生氣)</label>
+                <label for="equip-angel"><img src="c1.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 啟用【天使卡】(抵免1次顧客生氣$150)</label>
                 <span class="stock">庫存: <span id="stock-angel">0</span></span>
             </div>
             
@@ -200,7 +237,7 @@
 
             <div class="equip-item" id="wrap-aipause">
                 <input type="checkbox" id="equip-aipause">
-                <label for="equip-aipause"><img src="c5.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 啟用【電腦暫停卡】(僅對戰，電腦晚6秒)</label>
+                <label for="equip-aipause"><img src="c5.png" class="equip-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)"> 啟用【電腦暫停卡】(僅對戰，敵隊晚6秒)</label>
                 <span class="stock">庫存: <span id="stock-aipause">0</span></span>
             </div>
 
@@ -242,6 +279,7 @@
 
         <div style="display: flex; flex-direction: column; gap: 12px;">
             <button class="btn" onclick="startGame(false)" style="margin:0;">▶ 開始營業 (單人)</button>
+            <button class="btn rank" onclick="openRankModal()" style="margin:0;">🏅 排位賽模式 (1v1積分戰)</button>
             <div style="display: flex; gap: 5px; align-items: stretch; margin:0;">
                 <button class="btn blue" onclick="startGame(true)" style="flex: 1; margin:0;">⚔️ 與電腦對戰</button>
                 <select id="ai-count-select" style="padding: 10px; border-radius: 12px; border: 2px solid #2196f3; font-weight: bold; background: #fff; cursor:pointer;">
@@ -250,7 +288,7 @@
                     <option value="3">3位電腦</option>
                 </select>
             </div>
-            
+            <button class="btn blue" onclick="openTeamModal()" style="margin:0; background:#3f51b5; box-shadow:0 4px #303f9f;">🤝 電腦組隊模式</button>
             <button class="btn dev" onclick="openGambleModal()" style="margin:0; background:#673ab7; box-shadow:0 4px #512da8;">🎲 賭局模式 ($1200)</button>
             
             <button class="btn blue" onclick="window.location.href='help.html'" style="margin:0;">📖 遊戲說明</button>
@@ -268,7 +306,7 @@
             <div class="shop-item">
                 <div class="shop-info">
                     <img src="c1.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
-                    <strong>👼 天使卡</strong><small>保護免受顧客生氣扣款一次</small>
+                    <strong>👼 天使卡</strong><small>保護免受顧客生氣扣款一次 ($150)</small>
                     <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-angel">0</span></span>
                 </div>
                 <button class="btn primary" id="btn-buy-angel" onclick="buyItem('angel', 250)">$250 購買</button>
@@ -300,7 +338,7 @@
             <div class="shop-item">
                 <div class="shop-info">
                     <img src="c5.png" class="card-icon" onerror="this.style.display='none'" onclick="openImageViewer(event, this.src)">
-                    <strong>🛑 電腦暫停卡</strong><small>對戰時電腦開局暫停 6 秒</small>
+                    <strong>🛑 電腦暫停卡</strong><small>對戰時敵方電腦開局暫停 6 秒</small>
                     <span style="font-size:14px; color:#1976d2; font-weight:bold;">庫存: <span id="stock-shop-aipause">0</span></span>
                 </div>
                 <button class="btn primary" id="btn-buy-aipause" onclick="buyItem('aipause', 300)">$300 購買</button>
@@ -367,7 +405,6 @@
             <div style="display: flex; gap: 15px; font-size: 16px;">
                 <div id="money-display-container">💰 本局營收: $<span id="money">0</span></div>
                 <div>⏱️ 剩餘: <span id="game-timer">00:00</span></div>
-                <div id="vs-score-display" style="display:none; color: #d32f2f; flex-wrap: wrap;"></div>
             </div>
             <div class="stats-bar-controls">
                 <button class="control-btn" id="btn-instant-win" onclick="instantWin()" style="display:none; background:#9c27b0;">🏆 直接勝利</button>
@@ -430,6 +467,33 @@
     </div>
 </div>
 
+<!-- 電腦組隊模式確認彈窗 -->
+<div id="team-overlay" class="overlay">
+    <div class="overlay-box">
+        <h1>🤝 電腦組隊模式</h1>
+        <p>準備好與 1 位電腦隊友，一同對抗 2 位敵方電腦了嗎？<br>（獲勝可隨機獲得商城卡片乙張！）</p>
+        <button class="btn" style="background:#3f51b5; width: 100%; margin:0 0 10px 0; box-shadow:0 4px #303f9f; padding:15px; font-size:18px;" onclick="startTeamGame()">▶ 確認並開始遊戲</button>
+        <button class="btn danger" onclick="closeTeamModal()" style="width: 100%; margin:0; padding:15px; font-size:18px;">❌ 取消</button>
+    </div>
+</div>
+
+<!-- 排位賽確認彈窗 -->
+<div id="rank-overlay" class="overlay">
+    <div class="overlay-box">
+        <h1>🏅 排位賽模式</h1>
+        <p>您將與對應段位的專屬考官進行 1v1 對決！<br>勝者 <strong>+1 分</strong>，敗者 <strong>-1 分</strong>。<br><span style="font-size: 13px; color: #d32f2f;">(中途點擊「重新開始」將視同落敗扣分)</span></p>
+        
+        <div class="info-box" style="margin-bottom: 20px; font-size:15px; text-align: left;">
+            🏅 當前段位：<span id="rank-modal-name" style="color:#d32f2f; font-weight:bold;"></span><br>
+            📈 積分進度：<span id="rank-modal-score" style="color:#1976d2; font-weight:bold;"></span><br>
+            ⚠️ <span id="rank-modal-buff" style="color:#555; font-size:13px;"></span>
+        </div>
+        
+        <button class="btn rank" style="width: 100%; margin:0 0 10px 0; padding:15px; font-size:18px;" onclick="startRankGame()">▶ 確認並開始排位戰</button>
+        <button class="btn danger" onclick="closeRankModal()" style="width: 100%; margin:0; padding:15px; font-size:18px;">❌ 取消</button>
+    </div>
+</div>
+
 <!-- 賭局模式覆蓋層 -->
 <div id="gamble-overlay" class="overlay">
     <div class="overlay-box">
@@ -475,6 +539,8 @@
 
     let playerTotalMoney = 1500; 
     let gamesPlayed = 0; 
+    let rankScore = 0;
+    let immortalDate = 0; // 不朽等級獲得時間的 timestamp
     let inventory = { angel: 0, timecard: 0, slot1: 0, slot2: 0, noElec: 0, noTax: 0, noAll: 0, autocraft: 0, autostir: 0, aipause: 0, gambleCheat: 0 };
     let isDevMode = false;
 
@@ -482,6 +548,8 @@
     let gameTimeLeft = 0;
     let lastTime = 0;
     let isVsMode = false;
+    let isTeamVsMode = false;
+    let isRankedMode = false;
     let mainLoopId;
     
     // Gamble Mode variables
@@ -503,7 +571,6 @@
     let autoCraftProcessed = 0;
     let usedAutoStir = false;
     let usedAiPause = false;
-    let aiPauseTimer = 0;
 
     // 開啟圖片預覽
     function openImageViewer(event, src) {
@@ -515,7 +582,6 @@
         document.getElementById('image-viewer-overlay').style.display = 'flex';
     }
 
-    // 關閉圖片預覽
     function closeImageViewer() {
         document.getElementById('image-viewer-overlay').style.display = 'none';
         document.getElementById('enlarged-image').src = '';
@@ -545,7 +611,6 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        // 因應瀏覽器政策，若未靜音，在玩家首次點擊畫面時才真正播放
         document.body.addEventListener('click', () => {
             if (!isMuted && bgm.paused) {
                 bgm.play().catch(e => console.log(e));
@@ -561,6 +626,8 @@
                 const parsed = JSON.parse(data);
                 playerTotalMoney = parsed.money !== undefined ? parsed.money : 1500;
                 gamesPlayed = parsed.gamesPlayed || 0;
+                rankScore = parsed.rankScore || 0;
+                immortalDate = parsed.immortalDate || 0;
                 if (parsed.inventory) {
                     inventory = Object.assign(inventory, parsed.inventory);
                 }
@@ -573,9 +640,32 @@
             localStorage.setItem('dreamCafeData', JSON.stringify({
                 money: playerTotalMoney,
                 gamesPlayed: gamesPlayed,
+                rankScore: rankScore,
+                immortalDate: immortalDate,
                 inventory: inventory
             }));
         } catch(e) { console.error("Error saving data", e); }
+    }
+    
+    // 排位資訊計算與檢查過期機制
+    function getRankInfo() {
+        if (rankScore >= 29 && immortalDate > 0) {
+            const twentyDays = 20 * 24 * 60 * 60 * 1000;
+            if (Date.now() - immortalDate >= twentyDays) {
+                rankScore = 12; // 降回鑽石0分 (鑽石區間為 12~19)
+                immortalDate = 0;
+                alert("⚠️ 您的【不朽等級】已過期，已降回【鑽石等級】！");
+                saveGameData();
+            }
+        }
+
+        if (rankScore < 5) return { name: '🥉 青銅', curr: rankScore, max: 5, buff: '正常電腦' };
+        if (rankScore < 12) return { name: '🥇 黃金', curr: rankScore - 5, max: 7, buff: '套用攪拌減2秒效果' };
+        if (rankScore < 20) return { name: '💎 鑽石', curr: rankScore - 12, max: 8, buff: '套用升級格數*1格效果' };
+        if (rankScore < 29) return { name: '👑 大師', curr: rankScore - 20, max: 9, buff: '套用升級格數*2格效果' };
+        
+        let daysLeft = Math.ceil((immortalDate + 20 * 24 * 60 * 60 * 1000 - Date.now()) / (1000 * 60 * 60 * 24));
+        return { name: '🔥 不朽', curr: 'MAX', max: '-', buff: '套用升級格數*2格效果', daysLeft: daysLeft };
     }
 
     function toggleDevMode() {
@@ -583,13 +673,15 @@
             let pwd = prompt("請輸入開發者密碼：");
             if (pwd === "8888") {
                 isDevMode = true;
-                alert("🔓 開發者模式已解鎖！\n(金額可修改、商店免費、玩家產線1秒、滿局測試啟用、顧客不掉耐心、開放直接勝利)");
+                alert("🔓 開發者模式已解鎖！\n(金額可修改、商店免費、玩家產線1秒、滿局測試啟用、顧客不掉耐心、開放直接勝利、牌位強制加分/減分)");
                 const btn = document.getElementById('btn-dev-mode');
                 btn.textContent = '🔒 結束開發者';
                 btn.classList.replace('dev', 'danger');
                 document.getElementById('dev-max-games-btn').style.display = 'inline-block';
                 document.getElementById('edit-money-btn').style.display = 'inline-block';
                 document.getElementById('btn-instant-win').style.display = 'inline-block';
+                document.getElementById('dev-add-rank-btn').style.display = 'inline-block';
+                document.getElementById('dev-sub-rank-btn').style.display = 'inline-block';
                 updateMenuUI();
                 if(document.getElementById('shop-panel').style.display === 'block') updateShopUI();
             } else if (pwd !== null) {
@@ -604,6 +696,8 @@
             document.getElementById('dev-max-games-btn').style.display = 'none';
             document.getElementById('edit-money-btn').style.display = 'none';
             document.getElementById('btn-instant-win').style.display = 'none';
+            document.getElementById('dev-add-rank-btn').style.display = 'none';
+            document.getElementById('dev-sub-rank-btn').style.display = 'none';
             updateMenuUI();
             if(document.getElementById('shop-panel').style.display === 'block') updateShopUI();
         }
@@ -624,6 +718,24 @@
         if(!isDevMode) return;
         gamesPlayed = 5;
         settleGamesPlayed();
+    }
+    
+    function devAddRank() {
+        if(!isDevMode) return;
+        rankScore++;
+        if (rankScore === 29 && immortalDate === 0) immortalDate = Date.now();
+        saveGameData();
+        updateMenuUI();
+        alert("🛠️ 已強制增加 1 點排位積分！");
+    }
+
+    function devSubRank() {
+        if(!isDevMode) return;
+        rankScore = Math.max(0, rankScore - 1);
+        if (rankScore < 29) immortalDate = 0;
+        saveGameData();
+        updateMenuUI();
+        alert("🛠️ 已強制減少 1 點排位積分！");
     }
 
     function settleGamesPlayed() {
@@ -659,6 +771,8 @@
         document.getElementById('pause-overlay').style.display = 'none';
         document.getElementById('gameover-overlay').style.display = 'none';
         document.getElementById('gamble-overlay').style.display = 'none';
+        document.getElementById('team-overlay').style.display = 'none';
+        document.getElementById('rank-overlay').style.display = 'none';
         if (panelId) document.getElementById(panelId).style.display = (panelId === 'game-wrapper') ? 'flex' : 'block';
     }
 
@@ -666,12 +780,22 @@
         document.getElementById('pause-overlay').style.display = 'none';
         document.getElementById('gameover-overlay').style.display = 'none';
         document.getElementById('gamble-overlay').style.display = 'none';
+        document.getElementById('team-overlay').style.display = 'none';
+        document.getElementById('rank-overlay').style.display = 'none';
         if (overlayId !== 'none') document.getElementById(overlayId).style.display = 'flex';
     }
 
     function updateMenuUI() {
         document.getElementById('menu-money-display').textContent = playerTotalMoney.toLocaleString();
         document.getElementById('games-played-display').textContent = gamesPlayed;
+        
+        // 排位顯示更新
+        let rInfo = getRankInfo();
+        let displayStr = `${rInfo.name} (${rInfo.curr}/${rInfo.max})`;
+        if (rInfo.name.includes("不朽")) {
+            displayStr = `${rInfo.name} (剩餘 ${rInfo.daysLeft} 天)`;
+        }
+        document.getElementById('menu-rank-display').textContent = displayStr;
         
         document.getElementById('stock-angel').textContent = inventory.angel;
         document.getElementById('stock-timecard').textContent = inventory.timecard;
@@ -758,6 +882,23 @@
         }
     }
 
+    function openRankModal() {
+        let rInfo = getRankInfo();
+        document.getElementById('rank-modal-name').textContent = rInfo.name;
+        document.getElementById('rank-modal-score').textContent = rInfo.name.includes("不朽") ? `MAX (剩餘 ${rInfo.daysLeft} 天)` : `${rInfo.curr} / ${rInfo.max}`;
+        document.getElementById('rank-modal-buff').innerHTML = `考官特殊能力：<strong>${rInfo.buff}</strong>`;
+        showOverlay('rank-overlay');
+    }
+
+    function closeRankModal() {
+        showOverlay('none');
+    }
+    
+    function startRankGame() {
+        closeRankModal();
+        startGame(true, false, true); // (vsMode=true, teamMode=false, rankedMode=true)
+    }
+
     function openGambleModal() {
         document.getElementById('stock-gamblecheat').textContent = inventory.gambleCheat;
         const wrap = document.getElementById('wrap-gamblecheat');
@@ -778,6 +919,19 @@
         showOverlay('none');
     }
 
+    function openTeamModal() {
+        showOverlay('team-overlay');
+    }
+
+    function closeTeamModal() {
+        showOverlay('none');
+    }
+
+    function startTeamGame() {
+        closeTeamModal();
+        startGame(true, true, false);
+    }
+
     function startGambleGame() {
         const cost = isDevMode ? 0 : 1200;
         if (playerTotalMoney < cost) {
@@ -796,6 +950,8 @@
         
         isGambleMode = true;
         isVsMode = true;
+        isTeamVsMode = false;
+        isRankedMode = false;
 
         saveGameData();
         closeGambleModal();
@@ -808,13 +964,14 @@
         aiPlayers = [];
         const aiContainer = document.getElementById('ai-boards-container');
         aiContainer.innerHTML = '';
-        aiPauseTimer = 3.0; // 正常開局延遲
 
         for(let i=0; i<gambleAiCount; i++) {
             let ai = {
                 id: i,
                 name: gambleAiNames[i], color: gambleAiColors[i],
-                activeQueue: [], inventory: {}, customers: [], customerIndex: 65, servedCount: 0, maxQueue: 2
+                activeQueue: [], inventory: {}, customers: [], customerIndex: 65, servedCount: 0, 
+                maxQueue: 2, stirTime: 6000,
+                pauseTimer: 3.0 // 正常開局延遲
             };
             ITEMS.forEach(item => { ai.inventory[item.id] = 0; });
             ai.customers.push(generateCustomer(false, ai));
@@ -825,7 +982,9 @@
 
         document.getElementById('player-board').style.display = 'none';
         document.getElementById('money-display-container').style.display = 'none';
-        document.getElementById('vs-score-display').style.display = 'flex';
+        
+        // 顯示懸浮比分板
+        document.getElementById('floating-score-board').style.display = 'block';
         
         gameState = 'playing'; lastTime = Date.now(); showMainPanel('game-wrapper');
 
@@ -833,9 +992,11 @@
         mainLoopId = setInterval(gameTick, 100);
     }
 
-    function startGame(vsMode) {
+    function startGame(vsMode, teamMode = false, rankedMode = false) {
         isGambleMode = false;
         isVsMode = vsMode;
+        isTeamVsMode = teamMode;
+        isRankedMode = rankedMode;
         
         document.getElementById('player-board').style.display = 'flex';
         document.getElementById('money-display-container').style.display = 'block';
@@ -898,28 +1059,81 @@
         aiContainer.innerHTML = '';
         
         if (isVsMode) {
-            let aiCount = parseInt(document.getElementById('ai-count-select').value);
-            let aiNames = ["🤖 電腦", "👽 異星", "👾 駭客"];
-            let colors = ["#1976d2", "#9c27b0", "#e91e63"];
-            
-            aiPauseTimer = usedAiPause ? 9.0 : 3.0;
+            document.getElementById('floating-score-board').style.display = 'block';
 
-            for(let i=0; i<aiCount; i++) {
+            if (isRankedMode) {
+                // 排位模式：1v1
+                let rInfo = getRankInfo();
                 let ai = {
-                    id: i,
-                    name: aiNames[i] || `電腦 ${i+1}`,
-                    color: colors[i] || "#1976d2",
-                    activeQueue: [], inventory: {}, customers: [], customerIndex: 65, servedCount: 0, maxQueue: 2
+                    id: 0,
+                    name: `🤖 考官 (${rInfo.name.split(' ')[1]})`,
+                    color: "#e91e63",
+                    activeQueue: [], inventory: {}, customers: [], customerIndex: 65, servedCount: 0, 
+                    maxQueue: 2, stirTime: 6000,
+                    isTeammate: false,
+                    pauseTimer: usedAiPause ? 9.0 : 3.0
                 };
+                
+                // 套用段位電腦效果
+                if (rInfo.name.includes("黃金")) { ai.stirTime = 4000; }
+                if (rInfo.name.includes("鑽石")) { ai.maxQueue = 3; }
+                if (rInfo.name.includes("大師") || rInfo.name.includes("不朽")) { ai.maxQueue = 4; }
+                
                 ITEMS.forEach(item => { ai.inventory[item.id] = 0; });
                 ai.customers.push(generateCustomer(false, ai));
                 ai.customers.push(generateCustomer(false, ai));
                 aiPlayers.push(ai);
                 aiContainer.innerHTML += createAiBoardHTML(ai);
+
+            } else if (isTeamVsMode) {
+                // 電腦組隊模式：1隊友 + 2敵軍
+                let aiNames = ["🤖 電腦隊友", "😈 敵方電腦 A", "👿 敵方電腦 B"];
+                let colors = ["#4caf50", "#f44336", "#ff5722"];
+
+                for(let i=0; i<3; i++) {
+                    let isTeammate = (i === 0);
+                    // 暫停卡只對敵軍生效
+                    let pauseTime = (usedAiPause && !isTeammate) ? 9.0 : 3.0;
+                    
+                    let ai = {
+                        id: i,
+                        name: aiNames[i], color: colors[i],
+                        activeQueue: [], inventory: {}, customers: [], customerIndex: 65, servedCount: 0, 
+                        maxQueue: 2, stirTime: 6000,
+                        isTeammate: isTeammate,
+                        pauseTimer: pauseTime
+                    };
+                    ITEMS.forEach(item => { ai.inventory[item.id] = 0; });
+                    ai.customers.push(generateCustomer(false, ai));
+                    ai.customers.push(generateCustomer(false, ai));
+                    aiPlayers.push(ai);
+                    aiContainer.innerHTML += createAiBoardHTML(ai);
+                }
+            } else {
+                // 一般對戰模式
+                let aiCount = parseInt(document.getElementById('ai-count-select').value);
+                let aiNames = ["🤖 電腦", "👽 異星", "👾 駭客"];
+                let colors = ["#1976d2", "#9c27b0", "#e91e63"];
+                
+                for(let i=0; i<aiCount; i++) {
+                    let ai = {
+                        id: i,
+                        name: aiNames[i] || `電腦 ${i+1}`,
+                        color: colors[i] || "#1976d2",
+                        activeQueue: [], inventory: {}, customers: [], customerIndex: 65, servedCount: 0, 
+                        maxQueue: 2, stirTime: 6000,
+                        isTeammate: false,
+                        pauseTimer: usedAiPause ? 9.0 : 3.0
+                    };
+                    ITEMS.forEach(item => { ai.inventory[item.id] = 0; });
+                    ai.customers.push(generateCustomer(false, ai));
+                    ai.customers.push(generateCustomer(false, ai));
+                    aiPlayers.push(ai);
+                    aiContainer.innerHTML += createAiBoardHTML(ai);
+                }
             }
-            document.getElementById('vs-score-display').style.display = 'flex';
         } else {
-            document.getElementById('vs-score-display').style.display = 'none';
+            document.getElementById('floating-score-board').style.display = 'none';
         }
         
         gameState = 'playing'; lastTime = Date.now(); showMainPanel('game-wrapper');
@@ -932,11 +1146,13 @@
         if(isDevMode) addLog('p', "🛠️ 開發者模式啟動，各項特權已啟用！玩家製餐時間為1秒。");
         
         if(isVsMode) {
-            if(usedAiPause) {
-                aiPlayers.forEach(ai => addAiLog(ai.id, `🛑 受到【暫停卡】影響，將晚 9 秒行動！`));
-            } else {
-                aiPlayers.forEach(ai => addAiLog(ai.id, `🤖 預設等待 3 秒後開始動作...`));
-            }
+            aiPlayers.forEach(ai => {
+                if(ai.pauseTimer > 3.0) {
+                    addAiLog(ai.id, `🛑 受到【暫停卡】影響，將晚 9 秒行動！`);
+                } else {
+                    addAiLog(ai.id, `🤖 預設等待 3 秒後開始動作...`);
+                }
+            });
         }
 
         clearInterval(mainLoopId);
@@ -961,7 +1177,7 @@
                     </div>
                 </div>
                 <div class="queue-section">
-                    <div class="queue-title">🔥 產線 (<span id="a${ai.id}-queue-count">0</span>/2)</div>
+                    <div class="queue-title">🔥 產線 (<span id="a${ai.id}-queue-count">0</span>/${ai.maxQueue})</div>
                     <div class="queue-slots" id="a${ai.id}-queue-slots"></div>
                 </div>
                 <div class="ready-section">
@@ -974,6 +1190,15 @@
     }
 
     function resetToHome() {
+        if (isRankedMode && gameState === 'playing') {
+            let confirmQuit = confirm("⚠️ 確定要中途退出嗎？排位賽途中離開將直接扣除 1 分並視同落敗！");
+            if (!confirmQuit) return;
+            // 扣分機制
+            rankScore = Math.max(0, rankScore - 1);
+            if (rankScore < 29) immortalDate = 0; // 若降出不朽則取消 timestamp
+            saveGameData();
+        }
+        
         gameState = 'menu'; clearInterval(mainLoopId); 
         
         if (usedSlotCard === 1) { inventory.slot1--; }
@@ -987,8 +1212,11 @@
         usedAutoCraft = false; usedAutoStir = false; usedAiPause = false;
         
         isGambleMode = false; usedGambleCheat = false; gambleChosenAiId = null;
+        isTeamVsMode = false; isRankedMode = false;
+        
         document.getElementById('player-board').style.display = 'flex';
         document.getElementById('money-display-container').style.display = 'block';
+        document.getElementById('floating-score-board').style.display = 'none';
 
         saveGameData();
         showOverlay('none'); updateMenuUI(); showMainPanel('start-panel'); 
@@ -1006,6 +1234,8 @@
             if(chosenAi) {
                 chosenAi.servedCount = maxOther + 1;
             }
+        } else if (isTeamVsMode) {
+            pServedCount = aiPlayers[1].servedCount + aiPlayers[2].servedCount + 1;
         } else if (isVsMode) {
             let maxAiScore = Math.max(...aiPlayers.map(ai => ai.servedCount), 0);
             pServedCount = maxAiScore + 1;
@@ -1018,6 +1248,20 @@
         
         const resultMsg = document.getElementById('vs-result-msg');
         document.getElementById('score-text-wrapper').style.display = 'block';
+
+        const rewardPool = [
+            { id: 'angel', name: '👼 天使卡' },
+            { id: 'timecard', name: '⏳ 產線秒數減2秒卡' },
+            { id: 'autocraft', name: '🤖 自動製餐卡' },
+            { id: 'autostir', name: '🌪️ 自動攪拌卡' },
+            { id: 'aipause', name: '🛑 電腦暫停卡' },
+            { id: 'slot1', name: '⚡ 升級格數*1格卡' },
+            { id: 'slot2', name: '🚀 升級格數*2格卡' },
+            { id: 'noElec', name: '🛡️ 免扣電費卡' },
+            { id: 'noTax', name: '🛡️ 免扣營業稅卡' },
+            { id: 'noAll', name: '🌟 免扣所有費卡' },
+            { id: 'gambleCheat', name: '🃏 賭局模式作弊卡' }
+        ];
 
         if (isGambleMode) {
             if (usedGambleCheat) {
@@ -1040,21 +1284,6 @@
             if (usedGambleCheat) scoreBoard += `<br><span style="color:#e91e63;">(作弊卡發動：結算分數已 +2)</span>`;
 
             if (chosenAiScore > maxOtherScore) {
-                const rewardPool = [
-                    { id: 'angel', name: '👼 天使卡' },
-                    { id: 'timecard', name: '⏳ 產線秒數減2秒卡' },
-                    { id: 'autocraft', name: '🤖 自動製餐卡' },
-                    { id: 'autostir', name: '🌪️ 自動攪拌卡' },
-                    { id: 'aipause', name: '🛑 電腦暫停卡' },
-                    { id: 'slot1', name: '⚡ 升級格數*1格卡' },
-                    { id: 'slot2', name: '🚀 升級格數*2格卡' },
-                    { id: 'noElec', name: '🛡️ 免扣電費卡' },
-                    { id: 'noTax', name: '🛡️ 免扣營業稅卡' },
-                    { id: 'noAll', name: '🌟 免扣所有費卡' },
-                    { id: 'gambleCheat', name: '🃏 賭局模式作弊卡' }
-                ];
-                
-                // 4位電腦模式為雙倍獎勵 (發2張)
                 let rewardCount = gambleAiCount === 4 ? 2 : 1;
                 let wonRewards = [];
                 for(let i=0; i<rewardCount; i++) {
@@ -1062,7 +1291,6 @@
                     inventory[randReward.id]++;
                     wonRewards.push(`【${randReward.name}】`);
                 }
-                
                 resultMsg.innerHTML = `🎉 恭喜！你支持的隊伍獲勝了！<br><span style="color:#4caf50;">獲得獎勵：隨機獲得 ${wonRewards.join(", ")}！</span><br><br><span style="font-size:14px; font-weight:normal;">${scoreBoard}</span>`;
             } else if (chosenAiScore < maxOtherScore) {
                 resultMsg.innerHTML = `💸 賭局失敗...你支持的隊伍輸了。<br><br><span style="font-size:14px; font-weight:normal;">${scoreBoard}</span>`;
@@ -1072,25 +1300,59 @@
             document.getElementById('final-score').textContent = "0";
             document.getElementById('score-text-wrapper').style.display = 'none';
 
+        } else if (isRankedMode) {
+            document.getElementById('final-score').textContent = sessionMoney.toLocaleString();
+            let aiScore = aiPlayers[0].servedCount;
+            let winnerText = "";
+            let scoreBoard = `您的服務數: ${pServedCount}<br>${aiPlayers[0].name} 服務數: ${aiScore}<br>`;
+            
+            if (pServedCount > aiScore) {
+                rankScore++;
+                if (rankScore === 29 && immortalDate === 0) immortalDate = Date.now();
+                
+                // 勝利獲得隨機商店卡片
+                const randReward = rewardPool[Math.floor(Math.random() * rewardPool.length)];
+                inventory[randReward.id]++;
+                winnerText = `🎉 恭喜獲勝！排位積分 +1 分！<br><span style="color:#4caf50;">獎勵：隨機獲得 1 張【${randReward.name}】！</span>`;
+                
+            } else if (pServedCount < aiScore) {
+                rankScore = Math.max(0, rankScore - 1);
+                if (rankScore < 29) immortalDate = 0;
+                winnerText = `💻 電腦獲勝！排位積分 -1 分！`;
+            } else {
+                winnerText = `🤝 平手！排位積分不變。`;
+            }
+            saveGameData();
+            
+            resultMsg.innerHTML = `${winnerText}<br><br><span style="font-size:14px; font-weight:normal;">${scoreBoard}</span>`;
+
+        } else if (isTeamVsMode) {
+            document.getElementById('final-score').textContent = sessionMoney.toLocaleString();
+            let t1Score = pServedCount + aiPlayers[0].servedCount;
+            let t2Score = aiPlayers[1].servedCount + aiPlayers[2].servedCount;
+            let winnerText = "";
+            
+            if (t1Score > t2Score) {
+                const randReward = rewardPool[Math.floor(Math.random() * rewardPool.length)];
+                inventory[randReward.id]++;
+                winnerText = `🎉 恭喜勝利！玩家隊伍出餐數最高！<br><span style="color:#4caf50;">獎勵：隨機獲得 1 張【${randReward.name}】！</span>`;
+            } else if (t1Score < t2Score) {
+                winnerText = `💻 敵方隊伍勝利！再接再厲！`;
+            } else {
+                winnerText = `🤝 平手！雙方服務總數相同。`;
+            }
+            
+            let scoreBoard = `🔵 玩家隊伍總分: ${t1Score} (您: ${pServedCount}, ${aiPlayers[0].name}: ${aiPlayers[0].servedCount})<br>`;
+            scoreBoard += `🔴 敵方隊伍總分: ${t2Score} (${aiPlayers[1].name}: ${aiPlayers[1].servedCount}, ${aiPlayers[2].name}: ${aiPlayers[2].servedCount})<br>`;
+            
+            resultMsg.innerHTML = `${winnerText}<br><br><span style="font-size:14px; font-weight:normal;">${scoreBoard}</span>`;
+            
         } else if (isVsMode) {
             document.getElementById('final-score').textContent = sessionMoney.toLocaleString();
             let maxAiScore = Math.max(...aiPlayers.map(ai => ai.servedCount));
             let winnerText = "";
             
             if (pServedCount > maxAiScore) {
-                const rewardPool = [
-                    { id: 'angel', name: '👼 天使卡' },
-                    { id: 'timecard', name: '⏳ 產線秒數減2秒卡' },
-                    { id: 'autocraft', name: '🤖 自動製餐卡' },
-                    { id: 'autostir', name: '🌪️ 自動攪拌卡' },
-                    { id: 'aipause', name: '🛑 電腦暫停卡' },
-                    { id: 'slot1', name: '⚡ 升級格數*1格卡' },
-                    { id: 'slot2', name: '🚀 升級格數*2格卡' },
-                    { id: 'noElec', name: '🛡️ 免扣電費卡' },
-                    { id: 'noTax', name: '🛡️ 免扣營業稅卡' },
-                    { id: 'noAll', name: '🌟 免扣所有費卡' },
-                    { id: 'gambleCheat', name: '🃏 賭局模式作弊卡' }
-                ];
                 const randReward = rewardPool[Math.floor(Math.random() * rewardPool.length)];
                 inventory[randReward.id]++;
                 winnerText = `🎉 恭喜勝利！服務人數最高！<br><span style="color:#4caf50;">獎勵：隨機獲得 1 張【${randReward.name}】！</span>`;
@@ -1127,8 +1389,11 @@
         usedAutoCraft = false; usedAutoStir = false; usedAiPause = false;
         
         isGambleMode = false; usedGambleCheat = false; gambleChosenAiId = null;
+        isTeamVsMode = false; isRankedMode = false;
+
         document.getElementById('player-board').style.display = 'flex';
         document.getElementById('money-display-container').style.display = 'block';
+        document.getElementById('floating-score-board').style.display = 'none';
 
         showOverlay('none'); 
         settleGamesPlayed();
@@ -1162,14 +1427,16 @@
         }
 
         if (isVsMode) {
-            if (aiPauseTimer > 0) {
-                aiPauseTimer -= dt;
-                if (aiPauseTimer <= 0) {
-                    aiPlayers.forEach(ai => addAiLog(ai.id, `準備就緒，開始營業！`));
+            aiPlayers.forEach(ai => {
+                if (ai.pauseTimer > 0) {
+                    ai.pauseTimer -= dt;
+                    if (ai.pauseTimer <= 0) {
+                        addAiLog(ai.id, `準備就緒，開始營業！`);
+                    }
+                } else {
+                    aiTick(ai, dt);
                 }
-            } else {
-                aiPlayers.forEach(ai => aiTick(ai, dt));
-            }
+            });
         }
 
         updateGameUI();
@@ -1209,11 +1476,12 @@
         const cName = pCustomers[0].name;
         if (hasAngelCard && !angelTriggered) {
             angelTriggered = true;
-            addLog('p', `👼 天使卡抵銷了 ${cName} 的生氣扣款！`);
+            addLog('p', `👼 天使卡抵銷了 ${cName} 的生氣扣款 ($150)！`);
             const mc = document.getElementById('event-marquee');
             mc.style.display = 'block'; setTimeout(() => { mc.style.display = 'none'; }, 8000); 
         } else {
-            const oldMoney = sessionMoney; sessionMoney = Math.max(0, sessionMoney - 30);
+            const oldMoney = sessionMoney; 
+            sessionMoney = Math.max(0, sessionMoney - 150);
             addLog('p', `😡 ${cName} 等太久氣炸！損失 $${oldMoney - sessionMoney}。`);
         }
         pCustomers.shift(); 
@@ -1338,7 +1606,7 @@
 
     function aiTick(ai, dt) {
         if (ai.customers.length > 0) {
-            ai.customers[0].patienceLeft -= dt; // AI 永遠照常扣耐心 (無視開發者模式)
+            ai.customers[0].patienceLeft -= dt;
             if (ai.customers[0].patienceLeft <= 0) { 
                 addAiLog(ai.id, `😡 ${ai.customers[0].name} 生氣離開了！`); 
                 ai.customers.shift(); 
@@ -1356,7 +1624,7 @@
                 c.stirStartTime = Date.now();
                 addAiLog(ai.id, `自動進行攪拌...`);
             } else if (c.stirItemId && c.stirStatus === 'stirring') {
-                if (Date.now() - c.stirStartTime >= 6000) { 
+                if (Date.now() - c.stirStartTime >= ai.stirTime) { 
                     c.stirStatus = 'done';
                     addAiLog(ai.id, `攪拌完成！`);
                 }
@@ -1451,10 +1719,26 @@
         }
 
         if (isVsMode) {
-            let vsDisplay = isGambleMode ? `🎲 賭局模式 | ` : `🏆 玩家: ${pServedCount} | `;
+            // 更新懸浮比分看板
+            let vsDisplay = "";
+            if (isRankedMode) {
+                vsDisplay = `🏅 排位賽 &nbsp;|&nbsp; 玩家: ${pServedCount} &nbsp;|&nbsp; 考官: ${aiPlayers[0].servedCount}`;
+            } else if (isTeamVsMode) {
+                let t1Score = pServedCount + aiPlayers[0].servedCount;
+                let t2Score = aiPlayers[1].servedCount + aiPlayers[2].servedCount;
+                vsDisplay = `🔵 玩家隊伍: ${t1Score} &nbsp;|&nbsp; 🔴 敵方隊伍: ${t2Score}`;
+            } else if (isGambleMode) {
+                vsDisplay = `🎲 賭局模式 &nbsp;|&nbsp; `;
+                aiPlayers.forEach(ai => { vsDisplay += `<span style="color:${ai.color};">${ai.name}: ${ai.servedCount}</span> &nbsp;|&nbsp; `; });
+                vsDisplay = vsDisplay.slice(0, -15);
+            } else {
+                vsDisplay = `🏆 玩家: ${pServedCount} &nbsp;|&nbsp; `;
+                aiPlayers.forEach(ai => { vsDisplay += `<span style="color:${ai.color};">${ai.name}: ${ai.servedCount}</span> &nbsp;|&nbsp; `; });
+                vsDisplay = vsDisplay.slice(0, -15);
+            }
+            document.getElementById('floating-score-board').innerHTML = vsDisplay;
+
             aiPlayers.forEach(ai => {
-                vsDisplay += `<span style="color:${ai.color};">${ai.name}: ${ai.servedCount}</span> | `;
-                
                 if (ai.customers[0]) {
                     const c = ai.customers[0];
                     document.getElementById(`a${ai.id}-c1-name`).textContent = `👤 ${c.name}`;
@@ -1473,7 +1757,7 @@
                             aiStirContainer.innerHTML = `<button class="stir-btn" disabled style="opacity:0.6; cursor:not-allowed;">等待攪拌 ${itemName}</button>`;
                         } else if (c.stirStatus === 'stirring') {
                             let stirPct = 0;
-                            if (c.stirStartTime) stirPct = Math.min(100, ((Date.now() - c.stirStartTime) / 6000) * 100);
+                            if (c.stirStartTime) stirPct = Math.min(100, ((Date.now() - c.stirStartTime) / ai.stirTime) * 100);
                             aiStirContainer.innerHTML = `<button class="stir-btn stirring" disabled>攪拌中...</button>
                                                        <div class="stir-progress-bg"><div class="stir-progress-fill" style="width:${stirPct}%"></div></div>`;
                         } else if (c.stirStatus === 'done') {
@@ -1490,7 +1774,6 @@
                 document.getElementById(`a${ai.id}-queue-count`).textContent = ai.activeQueue.length;
                 renderQueue(ai.activeQueue, ai.maxQueue, `a${ai.id}-queue-slots`); renderInv(ai.inventory, `a${ai.id}-inventory-list`, ai.color);
             });
-            document.getElementById('vs-score-display').innerHTML = vsDisplay.slice(0, -3);
         }
     }
 
